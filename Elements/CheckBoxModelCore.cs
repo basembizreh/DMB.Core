@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public class CheckboxModelCore : ElementModel
+    public class CheckBoxModelCore : ElementModel
     {
-        public CheckboxModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public CheckBoxModelCore(ModuleStateCore moduleState) : base(moduleState) { }
 
         public override string GetElementNamePrefix() => "Checkbox";
 
