@@ -35,8 +35,5 @@ namespace DMB.Core.Elements
 
 		[Dmf]
 		public virtual MudBlazor.Margin Margin { get; set; } = MudBlazor.Margin.Normal;
-
-		[Dmf]
-		public virtual bool Dense { get; set; } = true;
 	}
 }

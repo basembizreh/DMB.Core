@@ -19,7 +19,7 @@ namespace DMB.Core.Elements
 		public virtual MudBlazor.Typo Typo { get; set; } = MudBlazor.Typo.body1;
 
 		[Dmf]
-		public virtual TextAlign TextAlign { get; set; } = TextAlign.Start;
+		public virtual MudBlazor.Align TextAlign { get; set; } = MudBlazor.Align.Start;
 
 		[Dmf]
 		public virtual MudBlazor.Color Color { get; set; } = MudBlazor.Color.Default;

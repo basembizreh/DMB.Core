@@ -129,6 +129,42 @@ namespace DMB.Core.Dmf
             return tb;
         }
 
+        protected virtual TextInputModelCore InitiateTextInputModel(ModuleStateCore state)
+        {
+            var ti = new TextInputModelCore(state);
+            return ti;
+        }
+
+        protected virtual SwitchModelCore InitiateSwitchModel(ModuleStateCore state)
+        {
+            var sw = new SwitchModelCore(state);
+            return sw;
+        }
+
+        protected virtual CheckBoxModelCore InitiateCheckBoxModel(ModuleStateCore state)
+        {
+            var cb = new CheckBoxModelCore(state);
+            return cb;
+        }
+
+        protected virtual DatePickerModelCore InitiateDatePickerModel(ModuleStateCore state)
+        {
+            var dp = new DatePickerModelCore(state);
+            return dp;
+        }
+
+        protected virtual TimePickerModelCore InitiateTimePickerModel(ModuleStateCore state)
+        {
+            var tp = new TimePickerModelCore(state);
+            return tp;
+        }
+
+        protected virtual ImageModelCore InitiateImageModel(ModuleStateCore state)
+        {
+            var img = new ImageModelCore(state);
+            return img;
+        }
+
         private ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
         {
             ElementModel el;
@@ -144,6 +180,30 @@ namespace DMB.Core.Dmf
 
                 case "TextBlock":
                     el = this.InitiateTextBlockModel(state);
+                    break;
+
+                case "TextInput":
+                    el = this.InitiateTextInputModel(state);
+                    break;
+
+                case "Switch":
+                    el = this.InitiateSwitchModel(state);
+                    break;
+
+                case "CheckBox":
+                    el = this.InitiateCheckBoxModel(state);
+                    break;
+
+                case "DatePicker":
+                    el = this.InitiateDatePickerModel(state);
+                    break;
+
+                case "TimePicker":
+                    el = this.InitiateTimePickerModel(state);
+                    break;
+
+                case "Image":
+                    el = this.InitiateImageModel(state);
                     break;
 
                 default:

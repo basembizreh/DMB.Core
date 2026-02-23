@@ -26,9 +26,6 @@ namespace DMB.Core.Elements
         public Variant Variant { get; set; } = Variant.Outlined;
 
         [Dmf]
-        public bool Dense { get; set; } = true;
-
-        [Dmf]
         public Margin Margin { get; set; } = Margin.None;
 
         [Dmf]
