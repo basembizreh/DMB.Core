@@ -37,7 +37,7 @@ namespace DMB.Core.Elements
 
 		protected ModuleStateCore ModuleStateCore => _moduleState;
 
-		public virtual UndoableStringCollection Fields { get; set; } = new();
+		public virtual DatasetFieldsCollection Fields { get; set; } = new();
 
 		public virtual List<DatasetRowModelCore> Rows { get; set; } = new();
 
