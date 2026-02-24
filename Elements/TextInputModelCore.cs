@@ -1,18 +1,21 @@
 ﻿using DMB.Core.Dmf;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class TextInputModelCore : ElementModel
-	{
-		public TextInputModelCore(ModuleStateCore moduleState)
+	public class TextInputModelCore : ElementModel, IValueElement
+    {
+        private string? ValueText;
+
+        public TextInputModelCore(ModuleStateCore moduleState)
 			: base(moduleState)
 		{
-			this.Text = this.Id;
+			this.Value = this.Id;
 			this.Label = this.Id;
 		}
 
@@ -21,8 +24,6 @@ namespace DMB.Core.Elements
 		[Dmf]
 		public virtual string Label { get; set; } = "Text Input";
 
-		[Dmf]
-		public virtual string? Text { get; set; } = "Text Input";
 
 		[Dmf]
 		public virtual TextAlign TextAlign { get; set; } = TextAlign.Start;
@@ -35,5 +36,15 @@ namespace DMB.Core.Elements
 
 		[Dmf]
 		public virtual MudBlazor.Margin Margin { get; set; } = MudBlazor.Margin.Normal;
-	}
+
+        [Dmf]
+        public virtual object? Value 
+		{
+			get => this.ValueText;
+            set => this.ValueText = (string?)value; 
+		}
+
+		[Browsable(false)]
+        public Type ValueType => typeof(string);
+    }
 }

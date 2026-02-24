@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public class DatePickerModelCore : ElementModel
+    public class DatePickerModelCore : ElementModel, IValueElement
     {
+        private DateTime? ValueDate;
+
         public DatePickerModelCore(ModuleStateCore moduleState) : base(moduleState) { }
 
         public override string GetElementNamePrefix() => "DatePicker";
@@ -31,8 +33,13 @@ namespace DMB.Core.Elements
         [Dmf]
         public bool Disabled { get; set; } = false;
 
-        // optional for preview only
         [Dmf]
-        public DateTime? Value { get; set; } = null;
+        public object? Value
+        {
+            get => ValueDate;
+            set => ValueDate = (DateTime?)value;
+        }
+
+        public Type ValueType => typeof(DateTime?);
     }
 }
