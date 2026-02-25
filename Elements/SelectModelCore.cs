@@ -15,6 +15,7 @@ namespace DMB.Core.Elements
 	public class SelectModelCore(ModuleStateCore moduleState) : ElementModel(moduleState), IDatasetBound
 	{
         public override string GetElementNamePrefix() => "Select";
+		private string? _dataset;
 
 		[Dmf]
 		public virtual string Label { get; set; } = "Select";
@@ -35,11 +36,27 @@ namespace DMB.Core.Elements
 		public virtual bool Disabled { get; set; } = false;
 
         [Dmf]
-        public virtual OptionsBinding? ItemsBinding { get; set; }
-
-		public string DatasetName
-		{
-			get => ItemsBinding?.DatasetId ?? "";
+		public virtual string? Dataset 
+		{ 
+			get
+			{
+				return this._dataset;
+			}
+			set
+			{
+				if (this._dataset != value)
+				{
+					this._dataset = value;
+					this.ValueField = null;
+					this.TextField = null;	
+                }
+			}
 		}
+
+        [Dmf]
+		public virtual string? ValueField { get; set; }
+
+        [Dmf]
+		public virtual string? TextField { get; set; }
     }
 }

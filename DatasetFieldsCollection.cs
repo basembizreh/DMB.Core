@@ -28,7 +28,7 @@ namespace DMB.Core
 		protected override void InsertItem(int index, T item)
 		{
 			item.Name = Normalize(item.Name);
-			item.DatasetName = this._datasetId;	
+			item.Dataset = this._datasetId;	
             this.EnsureUniqueOrThrow(item, indexToIgnore: null);
 			base.InsertItem(index, item);
 			this.Changed?.Invoke();

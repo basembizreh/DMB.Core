@@ -8,6 +8,6 @@ namespace DMB.Core.Elements
 {
 	public interface IDatasetBound
 	{
-		string? DatasetName { get; }  
+		string? Dataset { get; set; }  
 	}
 }

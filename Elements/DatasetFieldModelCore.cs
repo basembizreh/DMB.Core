@@ -17,6 +17,6 @@ namespace DMB.Core.Elements
         public virtual string Source { get; set; } = "";
 
         [Browsable(false)]
-        public string? DatasetName { get; set; }
+        public string? Dataset { get; set; }
     }
 }

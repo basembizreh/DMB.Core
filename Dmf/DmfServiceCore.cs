@@ -144,6 +144,12 @@ namespace DMB.Core.Dmf
             return ti;
         }
 
+        protected virtual SelectModelCore InitiateSelectModel(ModuleStateCore state)
+        {
+            var select = new SelectModelCore(state);
+            return select;
+        }
+
         protected virtual SwitchModelCore InitiateSwitchModel(ModuleStateCore state)
         {
             var sw = new SwitchModelCore(state);
@@ -210,6 +216,10 @@ namespace DMB.Core.Dmf
 
                 case "TextInput":
                     el = this.InitiateTextInputModel(state);
+                    break;
+
+                case "Select":
+                    el = this.InitiateSelectModel(state);
                     break;
 
                 case "Switch":
