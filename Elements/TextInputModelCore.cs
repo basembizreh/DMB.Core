@@ -8,14 +8,13 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class TextInputModelCore : ElementModel, IValueElement
+	public class TextInputModelCore : ElementModel, IInputField
     {
         private string? ValueText;
 
         public TextInputModelCore(ModuleStateCore moduleState)
 			: base(moduleState)
 		{
-			this.Value = this.Id;
 			this.Label = this.Id;
 		}
 
@@ -38,7 +37,7 @@ namespace DMB.Core.Elements
 		public virtual MudBlazor.Margin Margin { get; set; } = MudBlazor.Margin.Normal;
 
         [Dmf]
-        public virtual object? Value 
+        public virtual string? Value 
 		{
 			get => this.ValueText;
             set => this.ValueText = (string?)value; 

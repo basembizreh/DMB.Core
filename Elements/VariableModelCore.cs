@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class VariableModelCore : IModuleItem
+	public class VariableModelCore : IModuleItem, IValueElement
 	{
 		private readonly ModuleStateCore _moduleState;
 		private string _id = "";
@@ -27,7 +27,7 @@ namespace DMB.Core.Elements
 		}
 
 		[Dmf]
-		public virtual string Value { get; set; } = "";
+		public virtual string? Value { get; set; } = "";
 
 		public virtual string Id
 		{

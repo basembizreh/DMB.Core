@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public interface IValueElement
+    public interface IInputField : IValueElement, IModuleItem
     {
-        string? Value { get; set; }
+
     }
 }

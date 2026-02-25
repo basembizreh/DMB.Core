@@ -10,13 +10,16 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public class DatePickerModelCore : ElementModel, IValueElement
+    public class DatePickerModelCore : ElementModel, IInputField
     {
         private DateTime? ValueDate;
 
         public DatePickerModelCore(ModuleStateCore moduleState) : base(moduleState) { }
 
         public override string GetElementNamePrefix() => "DatePicker";
+
+        [Dmf]
+        public string DateFormat => "yyyy-MM-dd";
 
         [Dmf]
         public string Label { get; set; } = "Date";
@@ -34,12 +37,12 @@ namespace DMB.Core.Elements
         public bool Disabled { get; set; } = false;
 
         [Dmf]
-        public object? Value
+        public virtual string? Value
         {
-            get => ValueDate;
-            set => ValueDate = (DateTime?)value;
+            get => ValueDate?.ToString(this.DateFormat);
+            set => ValueDate = value == null ? null : DateTime.ParseExact(value, this.DateFormat, System.Globalization.CultureInfo.InvariantCulture);
         }
 
-        public Type ValueType => typeof(DateTime?);
+        //public Type ValueType => typeof(DateTime?);
     }
 }

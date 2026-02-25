@@ -4,7 +4,9 @@ using DMB.Core.Elements;
 
 namespace DMB.Core.Dmf
 {
-    public class DmfServiceCore
+    public class DmfServiceCore<DS, DF>
+        where DS : DatasetModelCore<DF>
+        where DF : DatasetFieldModelCore
     {
         public void Save(ModuleStateCore state, string filePath)
         {
@@ -15,6 +17,10 @@ namespace DMB.Core.Dmf
                 new XAttribute("version", DmfConstants.CurrentVersion));
 
             module.Add(SaveGrid(rootGrid));
+
+            module.Add(SaveDatasets(state));
+
+            module.Add(SaveVariables(state));
 
             var doc = new XDocument(module);
             doc.Save(filePath);
@@ -42,11 +48,14 @@ namespace DMB.Core.Dmf
                 throw new Exception($"Unsupported DMF version: {version}");
             }
 
+            state.Clear();
+
+            this.LoadDatasets(state, doc.Root?.Element("Datasets"));
+            this.LoadVariables(state, doc.Root?.Element("Variables"));
+
             var gridNode = doc.Root?.Element("Grid");
             if (gridNode == null)
                 return null;
-
-            state.Clear();
 
             var rootGrid = LoadGrid(state, gridNode, null);
             state.SetMainGrid(rootGrid);
@@ -165,6 +174,30 @@ namespace DMB.Core.Dmf
             return img;
         }
 
+        protected virtual DatasetModelCore<DF> InitiateDatasetModel(ModuleStateCore state)
+        {
+            var ds = new DatasetModelCore<DF>(state);
+            return ds;
+        }
+
+        protected virtual DatasetFieldModelCore InitiateDatasetFieldModel()
+        {
+            var field = new DatasetFieldModelCore();
+            return field;
+        }
+
+        protected virtual DatasetRowModelCore InitiateDatasetRowModel()
+        {
+            var row = new DatasetRowModelCore();
+            return row;
+        }
+
+        protected virtual VariableModelCore InitiateVariableModel(ModuleStateCore state)
+        {
+            var variable = new VariableModelCore(state);
+            return variable;
+        }
+
         private ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
         {
             ElementModel el;
@@ -218,6 +251,60 @@ namespace DMB.Core.Dmf
             return el;
         }
 
+        private void LoadDatasets(ModuleStateCore state, XElement? datasetsNode)
+        {
+            if (datasetsNode == null) return;
+
+            foreach (var dsNode in datasetsNode.Elements("Dataset"))
+            {
+                var ds = this.InitiateDatasetModel(state);
+                state.Register(ds);
+                DmfReflect.ReadAttributes(dsNode, ds);
+
+                // Fields
+                var fieldsNode = dsNode.Element("Fields");
+                if (fieldsNode != null)
+                {
+                    foreach (var fNode in fieldsNode.Elements("Field"))
+                    {
+                        var f = (DF)this.InitiateDatasetFieldModel(); 
+                        DmfReflect.ReadAttributes(fNode, f);
+                        ds.Fields.Add(f);
+                    }
+                }
+
+                // Rows
+                var rowsNode = dsNode.Element("Rows");
+                if (rowsNode != null)
+                {
+                    foreach (var rNode in rowsNode.Elements("Row"))
+                    {
+                        var row = this.InitiateDatasetRowModel();
+                        foreach (var c in rNode.Elements("C"))
+                        {
+                            var name = (string?)c.Attribute("n");
+                            var val = (string?)c.Attribute("v");
+                            if (!string.IsNullOrWhiteSpace(name))
+                                row.Values[name] = val; 
+                        }
+                        ds.Rows.Add(row);
+                    }
+                }
+            }
+        }
+
+        private void LoadVariables(ModuleStateCore state, XElement? varsNode)
+        {
+            if (varsNode == null) return;
+
+            foreach (var vNode in varsNode.Elements("Var"))
+            {
+                var v = this.InitiateVariableModel(state);
+                state.Register(v);
+                DmfReflect.ReadAttributes(vNode, v);
+            }
+        }
+
         private XElement SaveGrid(GridModelCore grid)
         {
             var node = NewNode(grid);
@@ -268,6 +355,59 @@ namespace DMB.Core.Dmf
                 typeName = typeName.Substring(0, typeName.Length - 5);
 
             return new XElement(typeName);
+        }
+
+        private XElement SaveDatasets(ModuleStateCore state)
+        {
+            var root = new XElement("Datasets");
+
+            var datasets = state.AllItems.OfType<DS>().ToList();
+            foreach (var ds in datasets)
+            {
+                var dsNode = new XElement("Dataset");
+                DmfReflect.WriteAttributes(dsNode, ds); 
+
+                // Fields
+                var fieldsNode = new XElement("Fields");
+                foreach (var f in ds.Fields)
+                {
+                    var fNode = new XElement("Field");
+                    DmfReflect.WriteAttributes(fNode, f);
+                    fieldsNode.Add(fNode);
+                }
+                dsNode.Add(fieldsNode);
+
+                var rowsNode = new XElement("Rows");
+                foreach (var row in ds.Rows) 
+                {
+                    var rNode = new XElement("Row");
+                    foreach (var kv in row.Values)
+                        rNode.Add(new XElement("C",
+                            new XAttribute("n", kv.Key),
+                            new XAttribute("v", kv.Value?.ToString() ?? "")));
+                    rowsNode.Add(rNode);
+                }
+                dsNode.Add(rowsNode);
+
+                root.Add(dsNode);
+            }
+
+            return root;
+        }
+
+        private XElement SaveVariables(ModuleStateCore state)
+        {
+            var root = new XElement("Variables");
+
+            var vars = state.AllItems.OfType<VariableModelCore>().ToList();
+            foreach (var v in vars)
+            {
+                var node = new XElement("Var");
+                DmfReflect.WriteAttributes(node, v);
+                root.Add(node);
+            }
+
+            return root;
         }
     }
 }

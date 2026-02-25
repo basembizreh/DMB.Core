@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DMB.Core.Dmf;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -9,9 +10,11 @@ namespace DMB.Core.Elements
 {
 	public class DatasetFieldModelCore : IDatasetBound
 	{
+        [Dmf]
         public virtual string Name { get; set; } = "";
 
-		public virtual string Source { get; set; } = "";
+        [Dmf]
+        public virtual string Source { get; set; } = "";
 
         [Browsable(false)]
         public string? DatasetName { get; set; }
