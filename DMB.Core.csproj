@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="DynamicExpresso.Core" Version="2.19.3" />
-    <PackageReference Include="MudBlazor" Version="8.15.0" />
+    <PackageReference Include="MudBlazor" Version="8.3.0" />
   </ItemGroup>
 
 </Project>

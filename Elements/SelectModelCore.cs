@@ -17,7 +17,10 @@ namespace DMB.Core.Elements
         public override string GetElementNamePrefix() => "Select";
 		private string? _dataset;
 
-		[Dmf]
+        [Dmf]
+        public MudBlazor.Origin AnchorOrigin { get; set; } = Origin.BottomCenter;
+
+        [Dmf]
 		public virtual string Label { get; set; } = "Select";
 
 		[Dmf]
@@ -58,5 +61,8 @@ namespace DMB.Core.Elements
 
         [Dmf]
 		public virtual string? TextField { get; set; }
+
+		[Dmf]
+		public bool EnableFilter { get; set; }
     }
 }
