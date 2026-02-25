@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class IDatasetBound
+	public interface IDatasetBound
 	{
-		string? DatasetName { get; set; }  
+		string? DatasetName { get; }  
 	}
 }

@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class SelectModelCore(ModuleStateCore moduleState) : ElementModel(moduleState)
+	public class SelectModelCore(ModuleStateCore moduleState) : ElementModel(moduleState), IDatasetBound
 	{
-		public override string GetElementNamePrefix() => "Select";
+        public override string GetElementNamePrefix() => "Select";
 
 		[Dmf]
 		public virtual string Label { get; set; } = "Select";
@@ -36,5 +36,10 @@ namespace DMB.Core.Elements
 
         [Dmf]
         public virtual OptionsBinding? ItemsBinding { get; set; }
+
+		public string DatasetName
+		{
+			get => ItemsBinding?.DatasetId ?? "";
+		}
     }
 }

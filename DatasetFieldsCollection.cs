@@ -9,25 +9,32 @@ using System.Threading.Tasks;
 
 namespace DMB.Core
 {
-	public sealed class DatasetFieldsCollection : Collection<DatasetFieldModelCore>
-	{
-		public event Action? Changed;
+	public sealed class DatasetFieldsCollection<T> : Collection<T>
+        where T : DatasetFieldModelCore
+    {
+		private readonly string _datasetId;
+
+        public DatasetFieldsCollection(string datasetId)
+        {
+            this._datasetId = datasetId;
+        }
+
+        public event Action? Changed;
 
 		public bool UniqueIgnoreCase { get; set; } = true;
 
 		public Func<DatasetFieldModelCore, (bool ok, string error)>? Validator { get; set; }
 
-		public DatasetFieldsCollection() { }
-
-		protected override void InsertItem(int index, DatasetFieldModelCore item)
+		protected override void InsertItem(int index, T item)
 		{
 			item.Name = Normalize(item.Name);
-			this.EnsureUniqueOrThrow(item, indexToIgnore: null);
+			item.DatasetName = this._datasetId;	
+            this.EnsureUniqueOrThrow(item, indexToIgnore: null);
 			base.InsertItem(index, item);
 			this.Changed?.Invoke();
 		}
 
-		protected override void SetItem(int index, DatasetFieldModelCore item)
+		protected override void SetItem(int index, T item)
 		{
 			item.Name = Normalize(item.Name);
 

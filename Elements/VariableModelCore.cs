@@ -17,13 +17,16 @@ namespace DMB.Core.Elements
 			this._moduleState = moduleState;
 		}
 
-		[Dmf]
+		public ModuleStateCore ModuleState => this._moduleState;
+
+        [Dmf]
 		public string Name
 		{
 			get { return this.Id; }
 			set { this.Id = value; }
 		}
 
+		[Dmf]
 		public virtual string Value { get; set; } = "";
 
 		public virtual string Id

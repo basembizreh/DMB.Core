@@ -1,6 +1,7 @@
 ﻿using DMB.Core.Dmf;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,15 +9,17 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class DatasetModelCore : IModuleItem
-	{
+	public class DatasetModelCore<T> : IModuleItem
+		where T : DatasetFieldModelCore
+    {
 		private readonly ModuleStateCore _moduleState;
 		private string _id = "";
+		private DatasetFieldsCollection<T>? _fields;
 
-		public DatasetModelCore(ModuleStateCore moduleState)
+        public DatasetModelCore(ModuleStateCore moduleState)
 		{
 			this._moduleState = moduleState;
-		}
+        }
 
 
 		[Dmf]
@@ -35,9 +38,21 @@ namespace DMB.Core.Elements
 			}
 		}
 
-		protected ModuleStateCore ModuleStateCore => _moduleState;
+		public string DatasetName { get => this.Id; }
 
-		public virtual DatasetFieldsCollection Fields { get; set; } = new();
+        protected ModuleStateCore ModuleStateCore => _moduleState;
+
+		public virtual DatasetFieldsCollection<T> Fields 
+		{
+			get
+			{
+				if (this._fields is null)
+				{
+					this._fields = new DatasetFieldsCollection<T>(this.DatasetName);
+                }
+				return this._fields;
+			}
+        }
 
 		public virtual List<DatasetRowModelCore> Rows { get; set; } = new();
 
