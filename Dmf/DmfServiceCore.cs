@@ -50,6 +50,8 @@ namespace DMB.Core.Dmf
 
             state.Clear();
 
+            state.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
             this.LoadDatasets(state, doc.Root?.Element("Datasets"));
             this.LoadVariables(state, doc.Root?.Element("Variables"));
 

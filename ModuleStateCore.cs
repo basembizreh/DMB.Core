@@ -14,13 +14,8 @@ namespace DMB.Core
 		public event Action<IModuleItem, string, string>? ItemIdChanged;
 		public event Action? StateChanged;
 
-		public IDictionary<string, object?> Globals { get; } 
-			= new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-			{
-				{
-					"Language", System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName
-                }
-			};
+		public IDictionary<string, string?> Globals { get; }
+			= new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         public List<IModuleItem> AllItems
 		{
@@ -88,6 +83,7 @@ namespace DMB.Core
 		public virtual void Clear()
 		{
 			this.AllItems.Clear();
+			this.Globals.Clear();
 			this.MainGrid = null;
 		}
 	}
