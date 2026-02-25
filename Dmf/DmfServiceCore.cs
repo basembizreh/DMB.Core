@@ -6,7 +6,7 @@ namespace DMB.Core.Dmf
 {
     public class DmfServiceCore<DS, DF>
         where DS : DatasetModelCore<DF>
-        where DF : DatasetFieldModelCore
+        where DF : DatasetFieldModelCore, new()
     {
         public void Save(ModuleStateCore state, string filePath)
         {
@@ -174,17 +174,10 @@ namespace DMB.Core.Dmf
             return img;
         }
 
-        protected virtual DatasetModelCore<DF> InitiateDatasetModel(ModuleStateCore state)
-        {
-            var ds = new DatasetModelCore<DF>(state);
-            return ds;
-        }
+        protected virtual DS InitiateDatasetModel(ModuleStateCore state) =>
+            (DS)Activator.CreateInstance(typeof(DS), state)!;
 
-        protected virtual DatasetFieldModelCore InitiateDatasetFieldModel()
-        {
-            var field = new DatasetFieldModelCore();
-            return field;
-        }
+        protected virtual DF InitiateDatasetFieldModel() => new DF();
 
         protected virtual DatasetRowModelCore InitiateDatasetRowModel()
         {
@@ -267,7 +260,7 @@ namespace DMB.Core.Dmf
                 {
                     foreach (var fNode in fieldsNode.Elements("Field"))
                     {
-                        var f = (DF)this.InitiateDatasetFieldModel(); 
+                        var f = this.InitiateDatasetFieldModel(); 
                         DmfReflect.ReadAttributes(fNode, f);
                         ds.Fields.Add(f);
                     }
