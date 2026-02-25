@@ -41,10 +41,14 @@ namespace DMB.Core.Elements
 		}
 
 		[Dmf]
-		public string? Class { get; set; }
+        [Expression]
+        [System.ComponentModel.Category("Appearance")]
+        public virtual string? Class { get; set; }
 
 		[Dmf]
-		public string? Style { get; set; }
+        [Expression]
+        [System.ComponentModel.Category("Appearance")]
+        public virtual string? Style { get; set; }
 
 		[Browsable(false)]
 		public CellModelCore? ParentCell { get; set; }

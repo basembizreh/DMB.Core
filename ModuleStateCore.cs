@@ -14,7 +14,15 @@ namespace DMB.Core
 		public event Action<IModuleItem, string, string>? ItemIdChanged;
 		public event Action? StateChanged;
 
-		public List<IModuleItem> AllItems
+		public IDictionary<string, object?> Globals { get; } 
+			= new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+			{
+				{
+					"Language", System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName
+                }
+			};
+
+        public List<IModuleItem> AllItems
 		{
 			get { return this.items; }
 		}

@@ -10,42 +10,28 @@ namespace DMB.Core.Evaluator
 {
 	public class ExpressionEvaluator
 	{
-		private readonly Interpreter _interpreter;
-		private Dictionary<string, object?>? _variables;
-		private List<IModuleItem>? items;
+        private readonly Interpreter _interpreter;
 
-		public ExpressionEvaluator(Dictionary<string, object?>? variables, List<IModuleItem>? moduleItems)
-		{
-			this._interpreter = this.CreateInterpreter();
-			this._variables = variables;
-			this.items = moduleItems;
+        public ExpressionEvaluator(ModuleStateCore state, Dictionary<string, object?>? vars, List<IModuleItem>? moduleItems)
+        {
+            this._interpreter = new Interpreter();
 
-			if (this._variables != null)
-			{
-				foreach (var v in this._variables)
-				{
-					this._interpreter.SetVariable(v.Key, v.Value);
-				}
-			}
+            this._interpreter.SetVariable("Globals", state.Globals);
 
-			if (this.items != null)
-			{
-				var inputs = this.items.Where(i => i is IValueElement).Cast<IValueElement>()
-					.Select(i => new { Name = ((IModuleItem)i).Id, Value = i.Value })
-					.ToDictionary(p => p.Name, c => c.Value);
+            if (vars != null)
+                this._interpreter.SetVariable("Vars", vars);
 
-				this._interpreter.SetVariable("Inputs", inputs);
-			}
-		}
+            if (moduleItems != null)
+            {
+                var inputs = moduleItems
+                    .OfType<IValueElement>()
+                    .Cast<IModuleItem>()
+                    .ToDictionary(i => i.Id, i => ((IValueElement)i).Value);
 
-		private Interpreter CreateInterpreter()
-		{
-			return new Interpreter();
-		}
+                this._interpreter.SetVariable("Inputs", inputs);
+            }
+        }
 
-		public object Evaluate(string expression)
-		{
-			return this._interpreter.Eval(expression);
-		}
-	}
+        public object? Evaluate(string expression) => this._interpreter.Eval(expression);
+    }
 }

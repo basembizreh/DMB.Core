@@ -13,7 +13,8 @@ namespace DMB.Core.Elements
 		public override string GetElementNamePrefix() => "Text";
 
 		[Dmf]
-		public virtual string? Text { get; set; } = "Text";
+		[Expression]
+        public virtual string? Text { get; set; } = "Text";
 
 		[Dmf]
 		public virtual MudBlazor.Typo Typo { get; set; } = MudBlazor.Typo.body1;
