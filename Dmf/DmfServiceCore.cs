@@ -72,7 +72,7 @@ namespace DMB.Core.Dmf
             grid.ParentCell = parentCell;
 
             state.Register(grid);
-            DmfReflect.ReadAttributes(node, grid);
+            DmfReflect.ReadAll(node, grid);
 
             foreach (var rowNode in node.Elements("Row"))
             {
@@ -92,7 +92,7 @@ namespace DMB.Core.Dmf
             row.ParentGrid = parentGrid;
 
             state.Register(row);
-            DmfReflect.ReadAttributes(node, row);
+            DmfReflect.ReadAll(node, row);
 
             foreach (var cellNode in node.Elements("Cell"))
             {
@@ -115,7 +115,7 @@ namespace DMB.Core.Dmf
             cell.Row = parentRow;
 
             state.Register(cell);
-            DmfReflect.ReadAttributes(node, cell);
+            DmfReflect.ReadAll(node, cell);
 
             var child = node.Elements().FirstOrDefault();
             if (child != null)
@@ -251,7 +251,7 @@ namespace DMB.Core.Dmf
             el.ParentCell = parentCell;
 
             state.Register(el);
-            DmfReflect.ReadAttributes(node, el);
+            DmfReflect.ReadAll(node, el);
 
             return el;
         }
@@ -264,7 +264,7 @@ namespace DMB.Core.Dmf
             {
                 var ds = this.InitiateDatasetModel(state);
                 state.Register(ds);
-                DmfReflect.ReadAttributes(dsNode, ds);
+                DmfReflect.ReadAll(dsNode, ds);
 
                 // Fields
                 var fieldsNode = dsNode.Element("Fields");
@@ -273,7 +273,7 @@ namespace DMB.Core.Dmf
                     foreach (var fNode in fieldsNode.Elements("Field"))
                     {
                         var f = this.InitiateDatasetFieldModel(); 
-                        DmfReflect.ReadAttributes(fNode, f);
+                        DmfReflect.ReadAll(fNode, f);
                         ds.Fields.Add(f);
                     }
                 }
@@ -306,14 +306,14 @@ namespace DMB.Core.Dmf
             {
                 var v = this.InitiateVariableModel(state);
                 state.Register(v);
-                DmfReflect.ReadAttributes(vNode, v);
+                DmfReflect.ReadAll(vNode, v);
             }
         }
 
         private XElement SaveGrid(GridModelCore grid)
         {
             var node = NewNode(grid);
-            DmfReflect.WriteAttributes(node, grid);
+            DmfReflect.WriteAll(node, grid);
 
             foreach (var row in grid.Rows)
                 node.Add(SaveRow(row));
@@ -324,7 +324,7 @@ namespace DMB.Core.Dmf
         private XElement SaveRow(RowModelCore row)
         {
             var node = NewNode(row);
-            DmfReflect.WriteAttributes(node, row);
+            DmfReflect.WriteAll(node, row);
 
             foreach (var cell in row.Cells)
                 node.Add(SaveCell(cell));
@@ -335,7 +335,7 @@ namespace DMB.Core.Dmf
         private XElement SaveCell(CellModelCore cell)
         {
             var node = NewNode(cell);
-            DmfReflect.WriteAttributes(node, cell);
+            DmfReflect.WriteAll(node, cell);
 
             if (cell.Element != null)
                 node.Add(SaveElement(cell.Element));
@@ -349,7 +349,7 @@ namespace DMB.Core.Dmf
                 return SaveGrid(g);
 
             var node = NewNode(el);
-            DmfReflect.WriteAttributes(node, el);
+            DmfReflect.WriteAll(node, el);
             return node;
         }
 
@@ -370,14 +370,14 @@ namespace DMB.Core.Dmf
             foreach (var ds in datasets)
             {
                 var dsNode = new XElement("Dataset");
-                DmfReflect.WriteAttributes(dsNode, ds); 
+                DmfReflect.WriteAll(dsNode, ds); 
 
                 // Fields
                 var fieldsNode = new XElement("Fields");
                 foreach (var f in ds.Fields)
                 {
                     var fNode = new XElement("Field");
-                    DmfReflect.WriteAttributes(fNode, f);
+                    DmfReflect.WriteAll(fNode, f);
                     fieldsNode.Add(fNode);
                 }
                 dsNode.Add(fieldsNode);
@@ -408,7 +408,7 @@ namespace DMB.Core.Dmf
             foreach (var v in vars)
             {
                 var node = new XElement("Var");
-                DmfReflect.WriteAttributes(node, v);
+                DmfReflect.WriteAll(node, v);
                 root.Add(node);
             }
 
