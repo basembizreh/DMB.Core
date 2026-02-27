@@ -17,6 +17,11 @@ namespace DMB.Core
 		public IDictionary<string, string?> Globals { get; }
 			= new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
+        public ModuleStateCore()
+        {
+            this.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        }
+
         public List<IModuleItem> AllItems
 		{
 			get { return this.items; }
