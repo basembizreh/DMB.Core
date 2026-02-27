@@ -100,5 +100,11 @@ namespace DMB.Core.Elements
 
 			Values[fieldName] = value;
 		}
+
+		public object? this[string key]
+		{
+			get => Values.TryGetValue(key, out var v) ? v : null;
+			set => Values[key] = value;
+		}
 	}
 }

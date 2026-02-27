@@ -15,13 +15,16 @@ namespace DMB.Core.Evaluator
 		{
 			_interpreter = new Interpreter();
 
+			// Allow LINQ extension methods like FirstOrDefault()
+			_interpreter.Reference(typeof(Enumerable));
+
 			// Globals
 			_interpreter.SetVariable("Globals", state.Globals);
 
 			// Vars: by name -> value
 			var vars = state.AllItems
 				.OfType<VariableModelCore>()
-				.ToDictionary(v => v.Name, v => v.Value);
+				.ToDictionary(v => v.Name, v => v.Value, StringComparer.OrdinalIgnoreCase);
 
 			_interpreter.SetVariable("Vars", vars);
 
@@ -29,20 +32,25 @@ namespace DMB.Core.Evaluator
 			var inputs = state.AllItems
 				.OfType<IValueElement>()
 				.Cast<IModuleItem>()
-				.ToDictionary(i => i.Id, i => ((IValueElement)i).Value);
+				.ToDictionary(i => i.Id, i => ((IValueElement)i).Value, StringComparer.OrdinalIgnoreCase);
 
 			_interpreter.SetVariable("Inputs", inputs);
+
+			// Datasets: by dataset Id -> dataset object
+			// NOTE: adjust the generic type if your DatasetModelCore type differs.
+			//var datasets = state.AllItems
+			//	.OfType<DatasetModelCore<DatasetFieldModelCore>>()
+			//	.ToDictionary(d => d.Id, d => (object)d, StringComparer.OrdinalIgnoreCase);
+			var datasets = state.AllItems
+				.OfType<DatasetModelCore<DatasetFieldModelCore>>()
+				.ToDictionary(d => d.Id, d => d, StringComparer.OrdinalIgnoreCase);
+
+			_interpreter.SetVariable("Datasets", datasets);
 		}
 
-		/// <summary>
-		/// Evaluate expression without any extra context.
-		/// </summary>
 		public object? Evaluate(string? expression)
 			=> Evaluate(expression, contextVars: null);
 
-		/// <summary>
-		/// Evaluate expression with extra context variables (e.g. Row, Item, Index).
-		/// </summary>
 		public object? Evaluate(string? expression, IDictionary<string, object?>? contextVars)
 		{
 			if (string.IsNullOrWhiteSpace(expression))
@@ -52,7 +60,6 @@ namespace DMB.Core.Evaluator
 
 			lock (_sync)
 			{
-				// Inject context variables (if any)
 				if (contextVars is not null)
 				{
 					foreach (var kv in contextVars)
@@ -65,7 +72,6 @@ namespace DMB.Core.Evaluator
 				}
 				finally
 				{
-					// Clean up injected variables to avoid leaking state to the next evaluation.
 					if (contextVars is not null)
 					{
 						foreach (var kv in contextVars)
@@ -75,15 +81,11 @@ namespace DMB.Core.Evaluator
 			}
 		}
 
-		/// <summary>
-		/// Convenience method for dataset calculated fields:
-		/// exposes Row variable as the row.Values dictionary.
-		/// </summary>
 		public object? EvaluateForRow(string? expression, IDictionary<string, object?> rowValues)
 		{
-			// NOTE: keep the variable name exactly as your ExpressionEditor writes it (Row or row).
 			var ctx = new Dictionary<string, object?>
 			{
+				// Keep the name exactly as your editor generates: Row
 				["Row"] = rowValues
 			};
 
@@ -93,11 +95,8 @@ namespace DMB.Core.Evaluator
 		private static string NormalizeExpression(string expression)
 		{
 			var s = expression.Trim();
-
-			// Allow Excel-style expressions that start with '='
 			if (s.Length > 0 && s[0] == '=')
 				s = s.Substring(1).TrimStart();
-
 			return s;
 		}
 	}
