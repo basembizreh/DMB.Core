@@ -16,7 +16,8 @@ namespace DMB.Core.Elements
             : base(moduleState)
         {
             this.TextAlign = new ExpressionablePropertyCore<MudBlazor.Align>();
-        }
+            this.Color = new ExpressionablePropertyCore<MudBlazor.Color>();
+		}
 
         public override string GetElementNamePrefix() => "Text";
 
@@ -32,6 +33,7 @@ namespace DMB.Core.Elements
         public virtual IExpressionablePropertyCore<MudBlazor.Align> TextAlign { get; set; } = default!;
 
         [Dmf]
-        public virtual IExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
+		[ExpandableProperty]
+		public virtual IExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
     }
 }

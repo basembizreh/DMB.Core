@@ -11,7 +11,7 @@ namespace DMB.Core.Elements
     public class ExpressionablePropertyCore<T> : IExpressionablePropertyCore<T>
     {
         [Dmf]
-        public bool EnableExpression { get; set; } = false;
+        public ValueMode ValueMode { get; set; } = ValueMode.Literal;
 
         [Dmf]
         public string? Expression { get; set; }

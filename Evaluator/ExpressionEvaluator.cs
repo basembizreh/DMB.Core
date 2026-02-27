@@ -1,43 +1,104 @@
-﻿using DMB.Core.Elements;
-using DynamicExpresso;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using DynamicExpresso;
+using DMB.Core.Elements;
 
 namespace DMB.Core.Evaluator
 {
 	public class ExpressionEvaluator
 	{
-        private readonly Interpreter _interpreter;
+		private readonly Interpreter _interpreter;
+		private readonly object _sync = new();
 
-        public ExpressionEvaluator(ModuleStateCore state)
-        {
-            this._interpreter = new Interpreter();
+		public ExpressionEvaluator(ModuleStateCore state)
+		{
+			_interpreter = new Interpreter();
 
-            this._interpreter.SetVariable("Globals", state.Globals);
+			// Globals
+			_interpreter.SetVariable("Globals", state.Globals);
 
-            var vars = state.AllItems.OfType<VariableModelCore>().Cast<VariableModelCore>()
-                .ToDictionary(p => p.Name, c => c.Value);
+			// Vars: by name -> value
+			var vars = state.AllItems
+				.OfType<VariableModelCore>()
+				.ToDictionary(v => v.Name, v => v.Value);
 
-            if (vars != null)
-            {
-                this._interpreter.SetVariable("Vars", vars);
-            }
+			_interpreter.SetVariable("Vars", vars);
 
-            var inputs = state.AllItems.OfType<IValueElement>()
-                .Cast<IModuleItem>()
-                .ToDictionary(i => i.Id, i => ((IValueElement)i).Value);
+			// Inputs: by element Id -> value (only IValueElement)
+			var inputs = state.AllItems
+				.OfType<IValueElement>()
+				.Cast<IModuleItem>()
+				.ToDictionary(i => i.Id, i => ((IValueElement)i).Value);
 
-            if (inputs != null)
-            {
-                this._interpreter.SetVariable("Inputs", inputs);
-            }
+			_interpreter.SetVariable("Inputs", inputs);
+		}
 
-            this._interpreter.SetVariable("Globals", state.Globals);
-        }
+		/// <summary>
+		/// Evaluate expression without any extra context.
+		/// </summary>
+		public object? Evaluate(string? expression)
+			=> Evaluate(expression, contextVars: null);
 
-        public object? Evaluate(string expression) => this._interpreter.Eval(expression);
-    }
+		/// <summary>
+		/// Evaluate expression with extra context variables (e.g. Row, Item, Index).
+		/// </summary>
+		public object? Evaluate(string? expression, IDictionary<string, object?>? contextVars)
+		{
+			if (string.IsNullOrWhiteSpace(expression))
+				return null;
+
+			var exp = NormalizeExpression(expression);
+
+			lock (_sync)
+			{
+				// Inject context variables (if any)
+				if (contextVars is not null)
+				{
+					foreach (var kv in contextVars)
+						_interpreter.SetVariable(kv.Key, kv.Value);
+				}
+
+				try
+				{
+					return _interpreter.Eval(exp);
+				}
+				finally
+				{
+					// Clean up injected variables to avoid leaking state to the next evaluation.
+					if (contextVars is not null)
+					{
+						foreach (var kv in contextVars)
+							_interpreter.UnsetVariable(kv.Key);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Convenience method for dataset calculated fields:
+		/// exposes Row variable as the row.Values dictionary.
+		/// </summary>
+		public object? EvaluateForRow(string? expression, IDictionary<string, object?> rowValues)
+		{
+			// NOTE: keep the variable name exactly as your ExpressionEditor writes it (Row or row).
+			var ctx = new Dictionary<string, object?>
+			{
+				["Row"] = rowValues
+			};
+
+			return Evaluate(expression, ctx);
+		}
+
+		private static string NormalizeExpression(string expression)
+		{
+			var s = expression.Trim();
+
+			// Allow Excel-style expressions that start with '='
+			if (s.Length > 0 && s[0] == '=')
+				s = s.Substring(1).TrimStart();
+
+			return s;
+		}
+	}
 }

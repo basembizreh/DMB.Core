@@ -1,6 +1,7 @@
 ﻿using DMB.Core;
 using DMB.Core.Dmf;
 using DMB.Core.Elements;
+using MudBlazor;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,18 +18,20 @@ namespace DMB.Core.Elements
 			: base(moduleState)
 		{
 			this.Text = this.Id;
+			this.Color = new ExpressionablePropertyCore<Color>();
 		}
 
 		public override string GetElementNamePrefix() => "Button";
 
 		[Dmf]
-		public string Text { get; set; } = "";
+		public virtual string Text { get; set; } = "";
 
 		[Dmf]
-		public MudBlazor.Color Color { get; set; } = MudBlazor.Color.Primary;
+		[ExpandableProperty]
+		public virtual IExpressionablePropertyCore<Color> Color { get; set; } = default!;
 
 		[Dmf]
-		public MudBlazor.Variant Variant { get; set; } = MudBlazor.Variant.Filled;
+		public virtual MudBlazor.Variant Variant { get; set; } = MudBlazor.Variant.Filled;
 
 		[Dmf]
 		public virtual string StartIconKey { get; set; } = "";
