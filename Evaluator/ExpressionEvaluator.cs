@@ -32,9 +32,10 @@ namespace DMB.Core.Evaluator
 			var inputs = state.AllItems
 				.OfType<IValueElement>()
 				.Cast<IModuleItem>()
-				.ToDictionary(i => i.Id, i => ((IValueElement)i).Value, StringComparer.OrdinalIgnoreCase);
+				.ToDictionary(i => i.Id, i => (IValueElement)i);
+                //.ToDictionary(i => i.Id, i => ((IValueElement)i).Value, StringComparer.OrdinalIgnoreCase);
 
-			_interpreter.SetVariable("Inputs", inputs);
+            _interpreter.SetVariable("Inputs", inputs);
 
 			// Datasets: by dataset Id -> dataset object
 			// NOTE: adjust the generic type if your DatasetModelCore type differs.

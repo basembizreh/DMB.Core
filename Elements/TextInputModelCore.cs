@@ -16,13 +16,12 @@ namespace DMB.Core.Elements
 			: base(moduleState)
 		{
 			this.Label = this.Id;
-		}
+        }
 
 		public override string GetElementNamePrefix() => "TextInput";
 
 		[Dmf]
 		public virtual string Label { get; set; } = "Text Input";
-
 
 		[Dmf]
 		public virtual TextAlign TextAlign { get; set; } = TextAlign.Start;
@@ -45,5 +44,8 @@ namespace DMB.Core.Elements
 
 		[Browsable(false)]
         public Type ValueType => typeof(string);
+
+        [Dmf]
+		public virtual int DebounceInterval { get; set; } = 0;
     }
 }

@@ -112,7 +112,7 @@ namespace DMB.Core.Dmf
         private CellModelCore LoadCell(ModuleStateCore state, XElement node, RowModelCore parentRow)
         {
             var cell = this.InitiateCellModel(state, parentRow);
-            cell.Row = parentRow;
+            //cell.Row = parentRow;
 
             state.Register(cell);
             DmfReflect.ReadAll(node, cell);
@@ -122,7 +122,7 @@ namespace DMB.Core.Dmf
             {
                 var el = LoadElement(state, child, cell);
                 cell.Element = el;
-                if (el != null) el.ParentCell = cell;
+                //if (el != null) el.ParentCell = cell;
             }
 
             return cell;
@@ -199,15 +199,15 @@ namespace DMB.Core.Dmf
             return variable;
         }
 
-        private ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
+        public ElementModel? LoadElement(ModuleStateCore state, XElement node)
         {
+            if (node.Name.LocalName == "Grid")
+                return LoadGrid(state, node, parentCell: null);
+
             ElementModel el;
 
             switch (node.Name.LocalName)
             {
-                case "Grid":
-                    return LoadGrid(state, node, parentCell);
-
                 case "Button":
                     el = this.InitiateButtonModel(state);
                     break;
@@ -248,13 +248,83 @@ namespace DMB.Core.Dmf
                     return null;
             }
 
-            el.ParentCell = parentCell;
+            el.ParentCell = null;
 
             state.Register(el);
             DmfReflect.ReadAll(node, el);
 
             return el;
         }
+
+        public ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
+        {
+            if (node.Name.LocalName == "Grid")
+                return LoadGrid(state, node, parentCell);
+
+            var el = LoadElement(state, node);
+            if (el == null)
+                return null;
+
+            el.ParentCell = parentCell;
+            return el;
+        }
+
+        //public ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
+        //{
+        //    ElementModel el;
+
+        //    switch (node.Name.LocalName)
+        //    {
+        //        case "Grid":
+        //            return LoadGrid(state, node, parentCell);
+
+        //        case "Button":
+        //            el = this.InitiateButtonModel(state);
+        //            break;
+
+        //        case "TextBlock":
+        //            el = this.InitiateTextBlockModel(state);
+        //            break;
+
+        //        case "TextInput":
+        //            el = this.InitiateTextInputModel(state);
+        //            break;
+
+        //        case "Select":
+        //            el = this.InitiateSelectModel(state);
+        //            break;
+
+        //        case "Switch":
+        //            el = this.InitiateSwitchModel(state);
+        //            break;
+
+        //        case "CheckBox":
+        //            el = this.InitiateCheckBoxModel(state);
+        //            break;
+
+        //        case "DatePicker":
+        //            el = this.InitiateDatePickerModel(state);
+        //            break;
+
+        //        case "TimePicker":
+        //            el = this.InitiateTimePickerModel(state);
+        //            break;
+
+        //        case "Image":
+        //            el = this.InitiateImageModel(state);
+        //            break;
+
+        //        default:
+        //            return null;
+        //    }
+
+        //    el.ParentCell = parentCell;
+
+        //    state.Register(el);
+        //    DmfReflect.ReadAll(node, el);
+
+        //    return el;
+        //}
 
         private void LoadDatasets(ModuleStateCore state, XElement? datasetsNode)
         {
@@ -338,12 +408,12 @@ namespace DMB.Core.Dmf
             DmfReflect.WriteAll(node, cell);
 
             if (cell.Element != null)
-                node.Add(SaveElement(cell.Element));
+                node.Add(this.SaveElementNode(cell.Element));
 
             return node;
         }
 
-        private XElement SaveElement(ElementModel el)
+        public XElement SaveElementNode(ElementModel el)
         {
             if (el is GridModelCore g)
                 return SaveGrid(g);

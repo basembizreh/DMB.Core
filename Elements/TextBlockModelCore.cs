@@ -17,7 +17,7 @@ namespace DMB.Core.Elements
         {
             this.TextAlign = new ExpressionablePropertyCore<MudBlazor.Align>();
             this.Color = new ExpressionablePropertyCore<MudBlazor.Color>();
-		}
+        }
 
         public override string GetElementNamePrefix() => "Text";
 

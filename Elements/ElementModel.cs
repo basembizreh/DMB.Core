@@ -17,7 +17,8 @@ namespace DMB.Core.Elements
 		{
 			this._moduleState = moduleState;
 			this.Id = moduleState.GenerateNextElementId(this);
-		}
+			this.Visible = new ExpressionablePropertyCore<bool>() { Value = true };
+        }
 
 		[Browsable(false)]
 		public ModuleStateCore ModuleStateCore => this._moduleState;
@@ -54,7 +55,11 @@ namespace DMB.Core.Elements
 		public CellModelCore? ParentCell { get; set; }
 
 		public virtual string GetElementNamePrefix() => throw new NotImplementedException();
-	}
+
+		[Dmf]
+		[ExpandableProperty]
+		public virtual IExpressionablePropertyCore<bool> Visible { get; set; } = default!;
+    }
 
 	public enum TextAlign
 	{

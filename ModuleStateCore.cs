@@ -14,7 +14,7 @@ namespace DMB.Core
 		public event Action<IModuleItem, string, string>? ItemIdChanged;
 		public event Action? StateChanged;
 
-		public IDictionary<string, string?> Globals { get; }
+        public IDictionary<string, string?> Globals { get; }
 			= new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         public ModuleStateCore()
@@ -53,25 +53,97 @@ namespace DMB.Core
 			return $"{prefix}_{max + 1}";
 		}
 
-		internal (bool ok, string error) CanSetItemId(IModuleItem? item, string newId)
-		{
-			newId = (newId ?? "").Trim();
+        internal void EnsureUniqueIdsForSubtree(IModuleItem root)
+        {
+            foreach (var item in EnumerateSubtreeItems(root))
+            {
+                var id = (item.Id ?? "").Trim();
+                var (ok, _) = this.CanSetItemId(item, id);
+                if (ok && !string.IsNullOrWhiteSpace(id))
+                    continue;
 
-			if (!IdValidator.IsValid(newId))
-				return (false, "Invalid C# identifier");
+                item.Id = this.GenerateNextElementId(item);
+            }
+        }
 
-			// Unique across ALL items (recommended)
-			bool exists = this.items.Any(x =>
-				!ReferenceEquals(x, item) &&
-				string.Equals(x.Id, newId, StringComparison.OrdinalIgnoreCase));
+        private static IEnumerable<IModuleItem> EnumerateSubtreeItems(IModuleItem root)
+        {
+            // Grid => Rows => Cells => Elements (recursively)
+            if (root is GridModelCore g)
+            {
+                yield return g;
 
-			if (exists)
-				return (false, $"Id '{newId}' already exists.");
+                foreach (var row in g.Rows)
+                {
+                    yield return row;
 
-			return (true, "");
-		}
+                    foreach (var cell in row.Cells)
+                    {
+                        yield return cell;
 
-		public void SetMainGrid(GridModelCore grid) => this.MainGrid = grid;
+                        if (cell.Element != null)
+                        {
+                            foreach (var x in EnumerateSubtreeItems(cell.Element))
+                                yield return x;
+                        }
+                    }
+                }
+
+                yield break;
+            }
+
+            // Row alone
+            if (root is RowModelCore r)
+            {
+                yield return r;
+
+                foreach (var cell in r.Cells)
+                {
+                    yield return cell;
+
+                    if (cell.Element != null)
+                        foreach (var x in EnumerateSubtreeItems(cell.Element))
+                            yield return x;
+                }
+
+                yield break;
+            }
+
+            // Cell alone
+            if (root is CellModelCore c)
+            {
+                yield return c;
+
+                if (c.Element != null)
+                    foreach (var x in EnumerateSubtreeItems(c.Element))
+                        yield return x;
+
+                yield break;
+            }
+
+            // Plain element / variable / dataset ... etc
+            yield return root;
+        }
+
+        internal (bool ok, string error) CanSetItemId(IModuleItem? item, string newId)
+        {
+            newId = (newId ?? "").Trim();
+
+            if (!IdValidator.IsValid(newId))
+                return (false, "Invalid C# identifier");
+
+            // Unique across ALL items (recommended)
+            bool exists = this.items.Any(x =>
+                !ReferenceEquals(x, item) &&
+                string.Equals(x.Id, newId, StringComparison.OrdinalIgnoreCase));
+
+            if (exists)
+                return (false, $"Id '{newId}' already exists.");
+
+            return (true, "");
+        }
+
+        public void SetMainGrid(GridModelCore grid) => this.MainGrid = grid;
 
 		public GridModelCore? GetMainGrid() => this.MainGrid;
 
@@ -91,5 +163,5 @@ namespace DMB.Core
 			this.Globals.Clear();
 			this.MainGrid = null;
 		}
-	}
+    }
 }

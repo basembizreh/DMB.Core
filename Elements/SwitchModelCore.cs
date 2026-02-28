@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public class SwitchModelCore : ElementModel
+    public class SwitchModelCore : ElementModel, IInputField
     {
         public SwitchModelCore(ModuleStateCore moduleState) : base(moduleState) { }
 
@@ -25,5 +25,7 @@ namespace DMB.Core.Elements
 
         [Dmf]
         public virtual bool Disabled { get; set; } = false;
+
+        public virtual string? Value { get => this.Checked.ToString(); set => this.Checked = Convert.ToBoolean(value); }
     }
 }

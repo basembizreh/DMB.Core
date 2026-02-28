@@ -35,8 +35,11 @@ namespace DMB.Core.Elements
         public ContentAlignment VerticalAlignment { get; set; } = ContentAlignment.Start;
 
         [Browsable(false)]
-		public RowModelCore Row { get; set; } = parentRow;
+		public RowModelCore Row { get; } = parentRow;
 
 		public override string GetElementNamePrefix() => "Cell";
+
+        [Browsable(false)]
+        public override IExpressionablePropertyCore<bool>? Visible { get => base.Visible;  }
 	}
 }
