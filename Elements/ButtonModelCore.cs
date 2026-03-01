@@ -18,7 +18,7 @@ namespace DMB.Core.Elements
 			: base(moduleState)
 		{
 			this.Text = this.Id;
-			this.Color = new ExpressionablePropertyCore<Color>();
+			this.Color = new ExpressionablePropertyCore<Color>() { Value = MudBlazor.Color.Default };
 		}
 
 		public override string GetElementNamePrefix() => "Button";

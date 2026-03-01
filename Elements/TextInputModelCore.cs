@@ -1,4 +1,5 @@
 ﻿using DMB.Core.Dmf;
+using MudBlazor;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,6 +17,8 @@ namespace DMB.Core.Elements
 			: base(moduleState)
 		{
 			this.Label = this.Id;
+			this.Color = new ExpressionablePropertyCore<MudBlazor.Color>() { Value = MudBlazor.Color.Default };
+			this.TextAlign = new ExpressionablePropertyCore<Align>() { Value = Align.Start };
         }
 
 		public override string GetElementNamePrefix() => "TextInput";
@@ -24,10 +27,12 @@ namespace DMB.Core.Elements
 		public virtual string Label { get; set; } = "Text Input";
 
 		[Dmf]
-		public virtual TextAlign TextAlign { get; set; } = TextAlign.Start;
+		[ExpandableProperty]
+		public virtual IExpressionablePropertyCore<Align> TextAlign { get; set; } = default!;
 
 		[Dmf]
-		public virtual MudBlazor.Color Color { get; set; } = MudBlazor.Color.Default;
+		[ExpandableProperty]
+		public virtual IExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
 
 		[Dmf]
 		public virtual MudBlazor.Variant Variant { get; set; } = MudBlazor.Variant.Outlined;

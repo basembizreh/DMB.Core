@@ -61,14 +61,6 @@ namespace DMB.Core.Elements
 		public virtual IExpressionablePropertyCore<bool> Visible { get; set; } = default!;
     }
 
-	public enum TextAlign
-	{
-		Start,
-		Center,
-		End,
-		Justify
-	}
-
 	public enum ContentAlignment
 	{
 		Start,

@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Xml.Linq;
 using DMB.Core.Elements;
 
@@ -17,9 +18,7 @@ namespace DMB.Core.Dmf
                 new XAttribute("version", DmfConstants.CurrentVersion));
 
             module.Add(SaveGrid(rootGrid));
-
             module.Add(SaveDatasets(state));
-
             module.Add(SaveVariables(state));
 
             var doc = new XDocument(module);
@@ -50,6 +49,7 @@ namespace DMB.Core.Dmf
 
             state.Clear();
 
+            // Keep language available as a global for expressions
             state.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
             this.LoadDatasets(state, doc.Root?.Element("Datasets"));
@@ -112,19 +112,25 @@ namespace DMB.Core.Dmf
         private CellModelCore LoadCell(ModuleStateCore state, XElement node, RowModelCore parentRow)
         {
             var cell = this.InitiateCellModel(state, parentRow);
-            //cell.Row = parentRow;
 
             state.Register(cell);
             DmfReflect.ReadAll(node, cell);
 
-            var child = node.Elements().FirstOrDefault();
-            if (child != null)
+            // Load expandable properties first, then load the single child element (if any)
+            ElementModel? element = null;
+
+            foreach (var child in node.Elements())
             {
-                var el = LoadElement(state, child, cell);
-                cell.Element = el;
-                //if (el != null) el.ParentCell = cell;
+                // IMPORTANT: model = cell, node = child
+                if (this.TryLoadExpandableProperty(cell, child))
+                    continue;
+
+                // First non-expandable child is the actual element inside the cell
+                element = LoadElement(state, child, cell);
+                break; // cell contains ONE element only (as per current design)
             }
 
+            cell.Element = element;
             return cell;
         }
 
@@ -269,63 +275,6 @@ namespace DMB.Core.Dmf
             return el;
         }
 
-        //public ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
-        //{
-        //    ElementModel el;
-
-        //    switch (node.Name.LocalName)
-        //    {
-        //        case "Grid":
-        //            return LoadGrid(state, node, parentCell);
-
-        //        case "Button":
-        //            el = this.InitiateButtonModel(state);
-        //            break;
-
-        //        case "TextBlock":
-        //            el = this.InitiateTextBlockModel(state);
-        //            break;
-
-        //        case "TextInput":
-        //            el = this.InitiateTextInputModel(state);
-        //            break;
-
-        //        case "Select":
-        //            el = this.InitiateSelectModel(state);
-        //            break;
-
-        //        case "Switch":
-        //            el = this.InitiateSwitchModel(state);
-        //            break;
-
-        //        case "CheckBox":
-        //            el = this.InitiateCheckBoxModel(state);
-        //            break;
-
-        //        case "DatePicker":
-        //            el = this.InitiateDatePickerModel(state);
-        //            break;
-
-        //        case "TimePicker":
-        //            el = this.InitiateTimePickerModel(state);
-        //            break;
-
-        //        case "Image":
-        //            el = this.InitiateImageModel(state);
-        //            break;
-
-        //        default:
-        //            return null;
-        //    }
-
-        //    el.ParentCell = parentCell;
-
-        //    state.Register(el);
-        //    DmfReflect.ReadAll(node, el);
-
-        //    return el;
-        //}
-
         private void LoadDatasets(ModuleStateCore state, XElement? datasetsNode)
         {
             if (datasetsNode == null) return;
@@ -342,7 +291,7 @@ namespace DMB.Core.Dmf
                 {
                     foreach (var fNode in fieldsNode.Elements("Field"))
                     {
-                        var f = this.InitiateDatasetFieldModel(); 
+                        var f = this.InitiateDatasetFieldModel();
                         DmfReflect.ReadAll(fNode, f);
                         ds.Fields.Add(f);
                     }
@@ -360,7 +309,7 @@ namespace DMB.Core.Dmf
                             var name = (string?)c.Attribute("n");
                             var val = (string?)c.Attribute("v");
                             if (!string.IsNullOrWhiteSpace(name))
-                                row.Values[name] = val; 
+                                row.Values[name] = val;
                         }
                         ds.Rows.Add(row);
                     }
@@ -440,7 +389,7 @@ namespace DMB.Core.Dmf
             foreach (var ds in datasets)
             {
                 var dsNode = new XElement("Dataset");
-                DmfReflect.WriteAll(dsNode, ds); 
+                DmfReflect.WriteAll(dsNode, ds);
 
                 // Fields
                 var fieldsNode = new XElement("Fields");
@@ -452,8 +401,9 @@ namespace DMB.Core.Dmf
                 }
                 dsNode.Add(fieldsNode);
 
+                // Rows
                 var rowsNode = new XElement("Rows");
-                foreach (var row in ds.Rows) 
+                foreach (var row in ds.Rows)
                 {
                     var rNode = new XElement("Row");
                     foreach (var kv in row.Values)
@@ -484,5 +434,118 @@ namespace DMB.Core.Dmf
 
             return root;
         }
+
+        private bool TryLoadExpandableProperty(object model, XElement node)
+        {
+            var modelType = model.GetType();
+
+            // Match by property name == node name
+            var propInfo = modelType.GetProperty(node.Name.LocalName);
+            if (propInfo is null)
+                return false;
+
+            // Must have [ExpandableProperty]
+            var hasAttr = Attribute.IsDefined(propInfo, typeof(ExpandablePropertyAttribute));
+            if (!hasAttr)
+                return false;
+
+            var propObj = propInfo.GetValue(model);
+
+            // Ensure instance exists (or require constructor initialization)
+            if (propObj is null)
+            {
+                if (propInfo.SetMethod is null)
+                    throw new InvalidOperationException(
+                        $"Property '{modelType.Name}.{propInfo.Name}' is null and has no setter. Initialize it in constructor.");
+
+                propObj = Activator.CreateInstance(propInfo.PropertyType)
+                         ?? throw new InvalidOperationException(
+                             $"Cannot create instance of '{propInfo.PropertyType.FullName}' for '{propInfo.Name}'.");
+
+                propInfo.SetValue(model, propObj);
+            }
+
+            // Prefer explicit XML loader
+            if (propObj is IXmlNodeSerializable xmlLoadable)
+            {
+                xmlLoadable.ReadXml(node);
+                return true;
+            }
+
+            // Fallback: ValueMode/Value attributes (common pattern)
+            LoadByCommonValueModeValue(propObj, node);
+            return true;
+        }
+
+        private void LoadByCommonValueModeValue(object propObj, XElement node)
+        {
+            var vmProp = propObj.GetType().GetProperty("ValueMode");
+            var vProp = propObj.GetType().GetProperty("Value");
+
+            var valueMode = (string?)node.Attribute("valueMode");
+            var valueText = (string?)node.Attribute("value");
+
+            // 1) ValueMode (usually enum)
+            if (vmProp != null && !string.IsNullOrWhiteSpace(valueMode))
+            {
+                var enumVal = Enum.Parse(vmProp.PropertyType, valueMode!, ignoreCase: true);
+                vmProp.SetValue(propObj, enumVal);
+            }
+
+            // 2) Value
+            if (vProp == null || valueText is null)
+                return;
+
+            var targetType = vProp.PropertyType;
+
+            // Handle Nullable<T>
+            var underlying = Nullable.GetUnderlyingType(targetType);
+            if (underlying != null)
+                targetType = underlying;
+
+            object converted;
+
+            if (targetType == typeof(string))
+            {
+                converted = valueText;
+            }
+            else if (targetType.IsEnum)
+            {
+                // IMPORTANT: parse enum names like "Start", "Center"
+                converted = Enum.Parse(targetType, valueText, ignoreCase: true);
+            }
+            else if (targetType == typeof(bool))
+            {
+                converted = bool.Parse(valueText);
+            }
+            else if (targetType == typeof(int))
+            {
+                converted = int.Parse(valueText);
+            }
+            else if (targetType == typeof(double))
+            {
+                converted = double.Parse(valueText, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else if (targetType == typeof(float))
+            {
+                converted = float.Parse(valueText, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else if (targetType == typeof(decimal))
+            {
+                converted = decimal.Parse(valueText, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                // Fallback for other primitives
+                converted = Convert.ChangeType(valueText, targetType, System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            vProp.SetValue(propObj, converted);
+        }
+    }
+
+    public interface IXmlNodeSerializable
+    {
+        void ReadXml(XElement node);
     }
 }
