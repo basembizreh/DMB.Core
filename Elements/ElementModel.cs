@@ -54,7 +54,7 @@ namespace DMB.Core.Elements
 		[Browsable(false)]
 		public CellModelCore? ParentCell { get; set; }
 
-		public virtual string GetElementNamePrefix() => throw new NotImplementedException();
+		public virtual string GetElementNamePrefix() => "DataGrid";
 
 		[Dmf]
 		[ExpandableProperty]

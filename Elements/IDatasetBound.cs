@@ -9,5 +9,5 @@ namespace DMB.Core.Elements
 	public interface IDatasetBound
 	{
 		string? Dataset { get; set; }  
-	}
+    }
 }

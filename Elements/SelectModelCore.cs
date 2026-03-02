@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace DMB.Core.Elements
 {
 	public class SelectModelCore(ModuleStateCore moduleState) : ElementModel(moduleState), IDatasetBound
-	{
+    {
         public override string GetElementNamePrefix() => "Select";
 		private string? _dataset;
 
@@ -39,7 +39,7 @@ namespace DMB.Core.Elements
 		public virtual bool Disabled { get; set; } = false;
 
         [Dmf]
-		public virtual string? Dataset 
+		public virtual string? Dataset
 		{ 
 			get
 			{

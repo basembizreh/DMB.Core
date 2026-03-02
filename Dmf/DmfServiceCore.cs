@@ -5,9 +5,10 @@ using DMB.Core.Elements;
 
 namespace DMB.Core.Dmf
 {
-    public class DmfServiceCore<DS, DF>
+    public class DmfServiceCore<DS, DF, DC>
         where DS : DatasetModelCore<DF>
         where DF : DatasetFieldModelCore, new()
+        where DC : DataGridColumnModelCore
     {
         public void Save(ModuleStateCore state, string filePath)
         {
@@ -188,6 +189,12 @@ namespace DMB.Core.Dmf
             return img;
         }
 
+        protected virtual DataGridModelCore<DC> InitiateDataGridModel(ModuleStateCore state)
+        {
+            var dg = new DataGridModelCore<DC>(state);
+            return dg;
+        }
+
         protected virtual DS InitiateDatasetModel(ModuleStateCore state) =>
             (DS)Activator.CreateInstance(typeof(DS), state)!;
 
@@ -248,6 +255,10 @@ namespace DMB.Core.Dmf
 
                 case "Image":
                     el = this.InitiateImageModel(state);
+                    break;
+
+                case "DataGrid":
+                    el = this.InitiateDataGridModel(state);
                     break;
 
                 default:

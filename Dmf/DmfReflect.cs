@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq;
@@ -7,184 +8,183 @@ using System.Xml.Linq;
 
 namespace DMB.Core.Dmf
 {
-	internal static class DmfReflect
-	{
-		private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropsCache = new();
+    internal static class DmfReflect
+    {
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropsCache = new();
 
-		public static void WriteAll(XElement node, object obj)
-		{
-			WriteAttributes(node, obj);
-			WriteExpandable(node, obj);
-		}
+        public static void WriteAll(XElement node, object obj)
+        {
+            WriteAttributes(node, obj);
+            WriteExpandable(node, obj);
+        }
 
-		public static void ReadAll(XElement node, object obj)
-		{
-			ReadAttributes(node, obj);
-			ReadExpandable(node, obj);
-		}
+        public static void ReadAll(XElement node, object obj)
+        {
+            ReadAttributes(node, obj);
+            ReadExpandable(node, obj);
+        }
 
-		// ===== Existing (attributes) =====
+        // ===== Existing (attributes) =====
 
-		public static void WriteAttributes(XElement node, object obj)
-		{
-			var t = obj.GetType();
-			var props = PropsCache.GetOrAdd(t, tt =>
-				tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-				  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
-				  .ToArray());
+        public static void WriteAttributes(XElement node, object obj)
+        {
+            var t = obj.GetType();
+            var props = PropsCache.GetOrAdd(t, tt =>
+                tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
+                  .ToArray());
 
-			foreach (var p in props)
-			{
-				if (p.GetCustomAttribute<ExpandablePropertyAttribute>() != null)
-					continue;
+            foreach (var p in props)
+            {
+                if (p.GetCustomAttribute<ExpandablePropertyAttribute>() != null)
+                    continue;
+                var attrName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                var val = p.GetValue(obj);
+                if (val == null) continue;
 
-				var attrName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
-				var val = p.GetValue(obj);
-				if (val == null) continue;
+                var text = ToStringValue(p.PropertyType, val);
+                node.SetAttributeValue(ToAttrName(attrName), text);
+            }
+        }
 
-				var text = ToStringValue(p.PropertyType, val);
-				node.SetAttributeValue(ToAttrName(attrName), text);
-			}
-		}
+        public static void ReadAttributes(XElement node, object obj)
+        {
+            var t = obj.GetType();
+            var props = PropsCache.GetOrAdd(t, tt =>
+                tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
+                  .ToArray());
 
-		public static void ReadAttributes(XElement node, object obj)
-		{
-			var t = obj.GetType();
-			var props = PropsCache.GetOrAdd(t, tt =>
-				tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-				  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
-				  .ToArray());
+            foreach (var p in props)
+            {
+                if (p.GetCustomAttribute<ExpandablePropertyAttribute>() != null)
+                    continue;
 
-			foreach (var p in props)
-			{
-				if (p.GetCustomAttribute<ExpandablePropertyAttribute>() != null)
-					continue;
+                var attrName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                var xAttr = node.Attribute(ToAttrName(attrName));
+                if (xAttr == null) continue;
 
-				var attrName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
-				var xAttr = node.Attribute(ToAttrName(attrName));
-				if (xAttr == null) continue;
+                if (TryParseValue(p.PropertyType, xAttr.Value, out var parsed))
+                    p.SetValue(obj, parsed);
+            }
+        }
 
-				if (TryParseValue(p.PropertyType, xAttr.Value, out var parsed))
-					p.SetValue(obj, parsed);
-			}
-		}
+        // ===== NEW: Expandable handling =====
 
-		// ===== NEW: Expandable handling =====
+        private static void WriteExpandable(XElement parent, object obj)
+        {
+            var t = obj.GetType();
+            var props = PropsCache.GetOrAdd(t, tt =>
+                tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
+                  .ToArray());
 
-		private static void WriteExpandable(XElement parent, object obj)
-		{
-			var t = obj.GetType();
-			var props = PropsCache.GetOrAdd(t, tt =>
-				tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-				  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
-				  .ToArray());
+            foreach (var p in props)
+            {
+                if (p.GetCustomAttribute<ExpandablePropertyAttribute>() == null)
+                    continue;
 
-			foreach (var p in props)
-			{
-				if (p.GetCustomAttribute<ExpandablePropertyAttribute>() == null)
-					continue;
+                var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                var val = p.GetValue(obj);
+                if (val == null) continue;
 
-				var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
-				var val = p.GetValue(obj);
-				if (val == null) continue;
+                var childNode = new XElement(childName);
 
-				var childNode = new XElement(childName);
+                WriteAll(childNode, val);
 
-				WriteAll(childNode, val);
+                parent.Add(childNode);
+            }
+        }
 
-				parent.Add(childNode);
-			}
-		}
+        private static void ReadExpandable(XElement parent, object obj)
+        {
+            var t = obj.GetType();
+            var props = PropsCache.GetOrAdd(t, tt =>
+                tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
+                  .ToArray());
 
-		private static void ReadExpandable(XElement parent, object obj)
-		{
-			var t = obj.GetType();
-			var props = PropsCache.GetOrAdd(t, tt =>
-				tt.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-				  .Where(p => p.CanRead && p.CanWrite && p.GetCustomAttribute<DmfAttribute>() != null)
-				  .ToArray());
+            foreach (var p in props)
+            {
+                if (p.GetCustomAttribute<ExpandablePropertyAttribute>() == null)
+                    continue;
 
-			foreach (var p in props)
-			{
-				if (p.GetCustomAttribute<ExpandablePropertyAttribute>() == null)
-					continue;
+                var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                var childNode = parent.Element(childName);
+                if (childNode == null) continue;
 
-				var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
-				var childNode = parent.Element(childName);
-				if (childNode == null) continue;
+                var current = p.GetValue(obj);
 
-				var current = p.GetValue(obj);
+                if (current == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Expandable property '{t.Name}.{p.Name}' is null أثناء Load. " +
+                        $"لازم تعمل لها initialization بالconstructor (مثل ما عملت بـ DMB_Razor).");
+                }
 
-				if (current == null)
-				{
-					throw new InvalidOperationException(
-						$"Expandable property '{t.Name}.{p.Name}' is null أثناء Load. " +
-						$"لازم تعمل لها initialization بالconstructor (مثل ما عملت بـ DMB_Razor).");
-				}
+                ReadAll(childNode, current);
+            }
+        }
 
-				ReadAll(childNode, current);
-			}
-		}
+        // ===== Helpers =====
 
-		// ===== Helpers =====
+        private static string ToAttrName(string propName)
+        {
+            if (string.IsNullOrEmpty(propName)) return propName;
+            return char.ToLowerInvariant(propName[0]) + propName.Substring(1);
+        }
 
-		private static string ToAttrName(string propName)
-		{
-			if (string.IsNullOrEmpty(propName)) return propName;
-			return char.ToLowerInvariant(propName[0]) + propName.Substring(1);
-		}
+        private static string ToStringValue(Type type, object value)
+        {
+            var nt = Nullable.GetUnderlyingType(type) ?? type;
 
-		private static string ToStringValue(Type type, object value)
-		{
-			var nt = Nullable.GetUnderlyingType(type) ?? type;
+            if (nt.IsEnum) return value.ToString() ?? "";
+            if (nt == typeof(bool)) return (bool)value ? "true" : "false";
 
-			if (nt.IsEnum) return value.ToString() ?? "";
-			if (nt == typeof(bool)) return (bool)value ? "true" : "false";
+            if (nt == typeof(DateTime))
+                return ((DateTime)value).ToString("o", CultureInfo.InvariantCulture);
 
-			if (nt == typeof(DateTime))
-				return ((DateTime)value).ToString("o", CultureInfo.InvariantCulture);
+            if (value is IFormattable f)
+                return f.ToString(null, CultureInfo.InvariantCulture) ?? "";
 
-			if (value is IFormattable f)
-				return f.ToString(null, CultureInfo.InvariantCulture) ?? "";
+            return value.ToString() ?? "";
+        }
 
-			return value.ToString() ?? "";
-		}
+        private static bool TryParseValue(Type type, string text, out object? value)
+        {
+            value = null;
+            var nt = Nullable.GetUnderlyingType(type) ?? type;
 
-		private static bool TryParseValue(Type type, string text, out object? value)
-		{
-			value = null;
-			var nt = Nullable.GetUnderlyingType(type) ?? type;
+            if (nt == typeof(string)) { value = text; return true; }
 
-			if (nt == typeof(string)) { value = text; return true; }
+            if (nt.IsEnum)
+            {
+                if (Enum.TryParse(nt, text, true, out var e)) { value = e; return true; }
+                return false;
+            }
 
-			if (nt.IsEnum)
-			{
-				if (Enum.TryParse(nt, text, true, out var e)) { value = e; return true; }
-				return false;
-			}
+            if (nt == typeof(int) && int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
+            { value = i; return true; }
 
-			if (nt == typeof(int) && int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
-			{ value = i; return true; }
+            if (nt == typeof(decimal) && decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
+            { value = d; return true; }
 
-			if (nt == typeof(decimal) && decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
-			{ value = d; return true; }
+            if (nt == typeof(double) && double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var db))
+            { value = db; return true; }
 
-			if (nt == typeof(double) && double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var db))
-			{ value = db; return true; }
+            if (nt == typeof(bool))
+            {
+                if (bool.TryParse(text, out var b)) { value = b; return true; }
+                if (text == "1") { value = true; return true; }
+                if (text == "0") { value = false; return true; }
+                return false;
+            }
 
-			if (nt == typeof(bool))
-			{
-				if (bool.TryParse(text, out var b)) { value = b; return true; }
-				if (text == "1") { value = true; return true; }
-				if (text == "0") { value = false; return true; }
-				return false;
-			}
+            if (nt == typeof(DateTime) &&
+                DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt))
+            { value = dt; return true; }
 
-			if (nt == typeof(DateTime) &&
-				DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dt))
-			{ value = dt; return true; }
-
-			return false;
-		}
-	}
+            return false;
+        }
+    }
 }
