@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DMB.Core.Dmf;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,7 @@ namespace DMB.Core.Elements
         {
         }
 
+        [Dmf]
         public virtual string? Dataset 
         {
             get
@@ -33,6 +35,7 @@ namespace DMB.Core.Elements
             }
         }
 
+        [DmfChildren("Columns", "Column")]
         public virtual DataGridColumnsCollection<T> Columns
         {
             get

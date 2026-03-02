@@ -13,16 +13,23 @@ namespace DMB.Core.Elements
         public DataGridColumnModelCore()
         {
             this.Visible = new ExpressionablePropertyCore<bool>() { Value = true };
+            this.HeaderText = new ExpressionablePropertyCore<string>() { Value = string.Empty };
+            this.HeaderClass = new ExpressionablePropertyCore<string>() { Value = string.Empty };
+            this.HeaderStyle = new ExpressionablePropertyCore<string>() { Value = string.Empty };
+            this.CellClass = new ExpressionablePropertyCore<string>() { Value = string.Empty };
+            this.CellStyle = new ExpressionablePropertyCore<string>() { Value = string.Empty };
         }
 
         [Dmf]
         public virtual string? Field { get; set; }
 
+        [Browsable(false)]
         public ModuleStateCore ModuleStateCore { get; set; } = default!;
 
         [Browsable(false)]
         public virtual string? DataGridId { get; set; }
 
+        [Browsable(false)]
         public string? Dataset
         {
             get
@@ -46,7 +53,24 @@ namespace DMB.Core.Elements
         }
 
         [Dmf]
-        public virtual string HeaderText { get; set; } = string.Empty;
+        [ExpandableProperty]
+        public virtual IExpressionablePropertyCore<string> HeaderText { get; set; } = default!;
+
+        [ExpandableProperty]
+        [Dmf]
+        public virtual IExpressionablePropertyCore<string> HeaderClass { get; set; } = default!;
+
+        [ExpandableProperty]
+        [Dmf]
+        public virtual IExpressionablePropertyCore<string> HeaderStyle { get; set; } = default!;
+
+        [ExpandableProperty]
+        [Dmf]
+        public virtual IExpressionablePropertyCore<string> CellClass { get; set; } = default!;
+
+        [ExpandableProperty]
+        [Dmf]
+        public virtual IExpressionablePropertyCore<string> CellStyle { get; set; } = default!;
 
         [Dmf]
         public virtual bool EnableFitering { get; set; } = true;

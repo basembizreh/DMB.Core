@@ -16,12 +16,14 @@ namespace DMB.Core.Dmf
         {
             WriteAttributes(node, obj);
             WriteExpandable(node, obj);
+            WriteChildrenCollections(node, obj);
         }
 
         public static void ReadAll(XElement node, object obj)
         {
             ReadAttributes(node, obj);
             ReadExpandable(node, obj);
+            ReadChildrenCollections(node, obj);
         }
 
         // ===== Existing (attributes) =====
@@ -117,12 +119,87 @@ namespace DMB.Core.Dmf
 
                 if (current == null)
                 {
-                    throw new InvalidOperationException(
-                        $"Expandable property '{t.Name}.{p.Name}' is null أثناء Load. " +
-                        $"لازم تعمل لها initialization بالconstructor (مثل ما عملت بـ DMB_Razor).");
+                    throw new InvalidOperationException($"Expandable property '{t.Name}.{p.Name}' is null during Load. " +
+                        $"All properties marked with [ExpandableProperty] must be initialized in the constructor.");
                 }
 
                 ReadAll(childNode, current);
+            }
+        }
+
+        private static void ReadChildrenCollections(XElement node, object model)
+        {
+            var t = model.GetType();
+            var props = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var p in props)
+            {
+                var chAttr = p.GetCustomAttributes(typeof(DmfChildrenAttribute), true)
+                              .OfType<DmfChildrenAttribute>()
+                              .FirstOrDefault();
+                if (chAttr is null) continue;
+
+                var container = node.Element(chAttr.ContainerName);
+                if (container == null) continue;
+
+                var collectionObj = p.GetValue(model);
+                if (collectionObj is null)
+                {
+                    throw new InvalidOperationException($"DmfChildren collection '{t.Name}.{p.Name}' is null during Load. " +
+                        $"It must be initialized in the constructor or property getter.");
+                }
+
+                // Must support Clear() to avoid duplicates
+                collectionObj.GetType().GetMethod("Clear")?.Invoke(collectionObj, null);
+
+                // Must support Add(T)
+                var addMethod = collectionObj.GetType().GetMethod("Add");
+                if (addMethod == null)
+                    throw new InvalidOperationException(
+                        $"DmfChildren collection '{t.Name}.{p.Name}' does not expose a public Add(T) method.");
+
+                var itemType = addMethod.GetParameters().First().ParameterType;
+
+                foreach (var itemNode in container.Elements(chAttr.ItemName))
+                {
+                    var item = Activator.CreateInstance(itemType);
+                    if (item == null) continue;
+
+                    ReadAll(itemNode, item);
+                    addMethod.Invoke(collectionObj, new[] { item });
+                }
+            }
+        }
+
+        private static void WriteChildrenCollections(XElement node, object model)
+        {
+            var props = model.GetType().GetProperties();
+
+            foreach (var p in props)
+            {
+                var chAttr = p.GetCustomAttributes(typeof(DmfChildrenAttribute), true)
+                              .OfType<DmfChildrenAttribute>()
+                              .FirstOrDefault();
+                if (chAttr is null) continue;
+
+                var value = p.GetValue(model);
+                if (value is null) continue;
+                if (value is not System.Collections.IEnumerable items) continue;
+
+                var container = new XElement(chAttr.ContainerName);
+
+                foreach (var item in items)
+                {
+                    if (item is null) continue;
+
+                    var itemNode = new XElement(chAttr.ItemName);
+
+                    // Write item attributes & expandable props
+                    WriteAll(itemNode, item); // recursion
+                    container.Add(itemNode);
+                }
+
+                node.Add(container);
             }
         }
 
