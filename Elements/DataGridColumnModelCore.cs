@@ -18,6 +18,7 @@ namespace DMB.Core.Elements
             this.HeaderStyle = new ExpressionablePropertyCore<string?>();
             this.CellClass = new ExpressionablePropertyCore<string?>();
             this.CellStyle = new ExpressionablePropertyCore<string?>();
+            this.Format = new ExpressionablePropertyCore<string?>();
         }
 
         [Dmf]
@@ -81,5 +82,9 @@ namespace DMB.Core.Elements
         [Dmf]
         [ExpandableProperty]
         public virtual IExpressionablePropertyCore<bool> Visible { get; set; } = default!;
+
+        [Dmf]
+        [ExpandableProperty]
+        public virtual IExpressionablePropertyCore<string?> Format { get; set; } = default!;
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DynamicExpresso;
 using DMB.Core.Elements;
+using System.Globalization;
 
 namespace DMB.Core.Evaluator
 {
@@ -47,7 +48,9 @@ namespace DMB.Core.Evaluator
 				.ToDictionary(d => d.Id, d => d, StringComparer.OrdinalIgnoreCase);
 
 			_interpreter.SetVariable("Datasets", datasets);
-		}
+
+            _interpreter.Reference(typeof(CultureInfo));
+        }
 
 		public object? Evaluate(string? expression)
 			=> Evaluate(expression, contextVars: null);
@@ -90,7 +93,8 @@ namespace DMB.Core.Evaluator
 				["Row"] = rowValues
 			};
 
-			return Evaluate(expression, ctx);
+			var val = Evaluate(expression, ctx);
+			return val;
 		}
 
 		private static string NormalizeExpression(string expression)

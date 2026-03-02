@@ -1,6 +1,7 @@
 ﻿using DMB.Core.Dmf;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +48,22 @@ namespace DMB.Core.Elements
                 return this._columns;
             }
         }
+
+        [Dmf]
+        public virtual bool Hover { get; set; } = true;
+
+        [Dmf]
+        public virtual bool Dense { get; set; } = false;
+
+        [Dmf]
+        public virtual bool Striped { get; set; } = false;
+
+        [Dmf]
+        public virtual bool Bordered { get; set; } = false;
+
+        [Dmf]
+        [DefaultValue(10)]
+        public virtual int RowsPerPage { get; set; } = 10;
 
         public override string GetElementNamePrefix() => "DataGrid";
     }

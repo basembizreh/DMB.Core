@@ -2,14 +2,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class DatasetFieldModelCore : IDatasetBound
-	{
+    public class DatasetFieldModelCore : IDatasetBound
+    {
         [Dmf]
         public virtual string Name { get; set; } = "";
 
@@ -18,5 +19,19 @@ namespace DMB.Core.Elements
 
         [Browsable(false)]
         public string? Dataset { get; set; }
+
+        [Dmf]
+        public virtual DataType DataType { get; set; } = DataType.String;
+    }
+
+    public enum DataType
+    {
+        String,
+        Integer,
+        Float,
+        DateOnly,
+        DateTime,
+        TimeOnly,
+        Boolean
     }
 }
