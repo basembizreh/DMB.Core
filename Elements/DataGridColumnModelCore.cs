@@ -13,11 +13,11 @@ namespace DMB.Core.Elements
         public DataGridColumnModelCore()
         {
             this.Visible = new ExpressionablePropertyCore<bool>() { Value = true };
-            this.HeaderText = new ExpressionablePropertyCore<string>() { Value = string.Empty };
-            this.HeaderClass = new ExpressionablePropertyCore<string>() { Value = string.Empty };
-            this.HeaderStyle = new ExpressionablePropertyCore<string>() { Value = string.Empty };
-            this.CellClass = new ExpressionablePropertyCore<string>() { Value = string.Empty };
-            this.CellStyle = new ExpressionablePropertyCore<string>() { Value = string.Empty };
+            this.HeaderText = new ExpressionablePropertyCore<string?>();
+            this.HeaderClass = new ExpressionablePropertyCore<string?>();
+            this.HeaderStyle = new ExpressionablePropertyCore<string?>();
+            this.CellClass = new ExpressionablePropertyCore<string?>();
+            this.CellStyle = new ExpressionablePropertyCore<string?>();
         }
 
         [Dmf]
@@ -46,7 +46,7 @@ namespace DMB.Core.Elements
                 }
                 return null;
             }
-            set 
+            set
             {
                 throw new Exception("You canno't assign the dataset for a DataGridColumn!");
             }
@@ -54,23 +54,23 @@ namespace DMB.Core.Elements
 
         [Dmf]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<string> HeaderText { get; set; } = default!;
+        public virtual IExpressionablePropertyCore<string?> HeaderText { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string> HeaderClass { get; set; } = default!;
+        public virtual IExpressionablePropertyCore<string?> HeaderClass { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string> HeaderStyle { get; set; } = default!;
+        public virtual IExpressionablePropertyCore<string?> HeaderStyle { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string> CellClass { get; set; } = default!;
+        public virtual IExpressionablePropertyCore<string?> CellClass { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string> CellStyle { get; set; } = default!;
+        public virtual IExpressionablePropertyCore<string?> CellStyle { get; set; } = default!;
 
         [Dmf]
         public virtual bool EnableFitering { get; set; } = true;

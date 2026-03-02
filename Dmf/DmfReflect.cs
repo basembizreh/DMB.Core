@@ -8,7 +8,7 @@ using System.Xml.Linq;
 
 namespace DMB.Core.Dmf
 {
-    internal static class DmfReflect
+    public static class DmfReflect
     {
         private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropsCache = new();
 

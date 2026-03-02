@@ -27,7 +27,7 @@ namespace DMB.Core
 			get { return this.items; }
 		}
 
-		public GridModelCore? MainGrid { get; set; }
+        public GridModelCore? MainGrid { get; set; }
 
 		public void RaiseItemIdChanged(IModuleItem item, string oldId, string newId) =>
 			this.ItemIdChanged?.Invoke(item, oldId, newId);
