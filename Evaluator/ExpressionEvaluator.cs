@@ -18,9 +18,10 @@ namespace DMB.Core.Evaluator
 
 			// Allow LINQ extension methods like FirstOrDefault()
 			_interpreter.Reference(typeof(Enumerable));
+            _interpreter.Reference(typeof(CultureInfo));
 
-			// Globals
-			_interpreter.SetVariable("Globals", state.Globals);
+            // Globals
+            _interpreter.SetVariable("Globals", state.Globals);
 
 			// Vars: by name -> value
 			var vars = state.AllItems
@@ -48,8 +49,6 @@ namespace DMB.Core.Evaluator
 				.ToDictionary(d => d.Id, d => d, StringComparer.OrdinalIgnoreCase);
 
 			_interpreter.SetVariable("Datasets", datasets);
-
-            _interpreter.Reference(typeof(CultureInfo));
         }
 
 		public object? Evaluate(string? expression)
@@ -73,6 +72,7 @@ namespace DMB.Core.Evaluator
 				try
 				{
 					return _interpreter.Eval(exp);
+					
 				}
 				finally
 				{
