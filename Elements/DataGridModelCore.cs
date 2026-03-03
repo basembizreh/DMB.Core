@@ -66,5 +66,14 @@ namespace DMB.Core.Elements
         public virtual int RowsPerPage { get; set; } = 10;
 
         public override string GetElementNamePrefix() => "DataGrid";
+
+        protected override void OnIdChanged(string oldId, string newId)
+        {
+            base.OnIdChanged(oldId, newId);
+            foreach (var column in this.Columns)
+            {
+                column.DataGridId = newId;
+            }
+        }
     }
 }

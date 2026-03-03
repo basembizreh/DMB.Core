@@ -19,12 +19,6 @@ namespace DMB.Core
         {
             _moduleStatus = moduleState;
             _dataGridId = dataGridId;
-
-            if (ModuleState != null)
-            {
-                ModuleState.ItemIdChanged -= ModuleState_ItemIdChanged;
-                ModuleState.ItemIdChanged += ModuleState_ItemIdChanged;
-            }
         }
 
         public ModuleStateCore? ModuleState => _moduleStatus;
@@ -37,16 +31,6 @@ namespace DMB.Core
         }
 
         public bool SuspendChanged { get; set; } // NEW
-
-        private void ModuleState_ItemIdChanged(IModuleItem item, string oldId, string newId)
-        {
-            if (oldId != _dataGridId)
-                return;
-
-            _dataGridId = newId;
-            foreach (var col in this)
-                col.DataGridId = newId;
-        }
 
         protected override void InsertItem(int index, T item)
         {

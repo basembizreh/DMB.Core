@@ -35,15 +35,11 @@ namespace DMB.Core.Elements
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(this.DataGridId))
+                if (!string.IsNullOrWhiteSpace(this.DataGridId)
+                    && this.ModuleStateCore.TryGetItemById(this.DataGridId, out var item)
+                    && item is IDatasetBound dataGrid)
                 {
-                    var item = this.ModuleStateCore.AllItems
-                        .FirstOrDefault(p => p.Id == this.DataGridId);
-
-                    if (item is IDatasetBound dataGrid)
-                    {
-                        return dataGrid.Dataset;
-                    }
+                    return dataGrid.Dataset;
                 }
                 return null;
             }

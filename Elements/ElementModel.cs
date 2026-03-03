@@ -37,10 +37,17 @@ namespace DMB.Core.Elements
 
 				var oldId = this._id;
 				this._id = value!.Trim();
+
+				this.OnIdChanged(oldId, value);
 				this._moduleState.RaiseItemIdChanged(this, oldId, this._id);
 			}
 		}
 
+		protected virtual void OnIdChanged(string oldId, string newId) 
+		{
+            this.ModuleStateCore.MarkItemsChanged();
+        }
+		
 		[Dmf]
         [Expression]
         [System.ComponentModel.Category("Appearance")]

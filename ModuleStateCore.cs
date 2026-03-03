@@ -22,6 +22,34 @@ namespace DMB.Core
             this.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
         }
 
+        private int _itemsVersion = 0;
+        private int _cacheVersion = -1;
+        private Dictionary<string, IModuleItem>? _itemsByIdCache;
+
+        internal protected void MarkItemsChanged()
+        {
+            this._itemsVersion++;
+        }
+
+        public bool TryGetItemById(string id, out IModuleItem item)
+        {
+            EnsureCache();
+            return _itemsByIdCache!.TryGetValue(id, out item!);
+        }
+
+        private void EnsureCache()
+        {
+            if (_itemsByIdCache is not null && _cacheVersion == _itemsVersion)
+                return;
+
+            _itemsByIdCache = new Dictionary<string, IModuleItem>(StringComparer.Ordinal);
+            foreach (var it in this.items)
+                if (!string.IsNullOrWhiteSpace(it.Id))
+                    _itemsByIdCache[it.Id] = it;
+
+            _cacheVersion = _itemsVersion;
+        }
+
         public List<IModuleItem> AllItems
 		{
 			get { return this.items; }
@@ -159,9 +187,15 @@ namespace DMB.Core
 
 		public virtual void Clear()
 		{
-			this.AllItems.Clear();
+            foreach (var it in this.items)
+            {
+                if (it is IDisposable d) d.Dispose();
+            }
+
+            this.AllItems.Clear();
 			this.Globals.Clear();
 			this.MainGrid = null;
-		}
+            this.MarkItemsChanged();
+        }
     }
 }
