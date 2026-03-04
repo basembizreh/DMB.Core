@@ -38,7 +38,7 @@ namespace DMB.Core.Dmf
             return row;
         }
 
-        public GridModelCore? Load(ModuleStateCore state, string filePath)
+        public GridModelCore? Load(ModuleStateCore state, string filePath, bool isPaste)
         {
             var doc = XDocument.Load(filePath);
 
@@ -53,31 +53,32 @@ namespace DMB.Core.Dmf
             // Keep language available as a global for expressions
             state.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
-            this.LoadDatasets(state, doc.Root?.Element("Datasets"));
-            this.LoadVariables(state, doc.Root?.Element("Variables"));
+            this.LoadDatasets(state, doc.Root?.Element("Datasets"), isPaste);
+            this.LoadVariables(state, doc.Root?.Element("Variables"), isPaste);
 
             var gridNode = doc.Root?.Element("Grid");
             if (gridNode == null)
                 return null;
 
-            var rootGrid = LoadGrid(state, gridNode, null);
+            var rootGrid = LoadGrid(state, gridNode, null, isPaste);
             state.SetMainGrid(rootGrid);
 
             state.RaiseStateChanged();
             return rootGrid;
         }
 
-        private GridModelCore LoadGrid(ModuleStateCore state, XElement node, CellModelCore? parentCell)
+        private GridModelCore LoadGrid(ModuleStateCore state, XElement node, CellModelCore? parentCell
+            , bool isPaste)
         {
             var grid = this.InitiateGridModel(state);
             grid.ParentCell = parentCell;
 
             state.Register(grid);
-            DmfReflect.ReadAll(node, grid);
+            DmfReflect.ReadAll(node, grid, isPaste);
 
             foreach (var rowNode in node.Elements("Row"))
             {
-                var row = LoadRow(state, rowNode, grid);
+                var row = LoadRow(state, rowNode, grid, isPaste);
                 grid.Rows.Add(row);
             }
 
@@ -87,17 +88,18 @@ namespace DMB.Core.Dmf
             return grid;
         }
 
-        private RowModelCore LoadRow(ModuleStateCore state, XElement node, GridModelCore parentGrid)
+        private RowModelCore LoadRow(ModuleStateCore state, XElement node, GridModelCore parentGrid
+            , bool isPaste)
         {
             var row = this.InitiateRowModel(state);
             row.ParentGrid = parentGrid;
 
             state.Register(row);
-            DmfReflect.ReadAll(node, row);
+            DmfReflect.ReadAll(node, row, isPaste);
 
             foreach (var cellNode in node.Elements("Cell"))
             {
-                var cell = LoadCell(state, cellNode, row);
+                var cell = LoadCell(state, cellNode, row, isPaste);
                 row.Cells.Add(cell);
             }
 
@@ -110,12 +112,13 @@ namespace DMB.Core.Dmf
             return cell;
         }
 
-        private CellModelCore LoadCell(ModuleStateCore state, XElement node, RowModelCore parentRow)
+        private CellModelCore LoadCell(ModuleStateCore state, XElement node, RowModelCore parentRow
+            , bool isPaste)
         {
             var cell = this.InitiateCellModel(state, parentRow);
 
             state.Register(cell);
-            DmfReflect.ReadAll(node, cell);
+            DmfReflect.ReadAll(node, cell, isPaste);
 
             // Load expandable properties first, then load the single child element (if any)
             ElementModel? element = null;
@@ -127,7 +130,7 @@ namespace DMB.Core.Dmf
                     continue;
 
                 // First non-expandable child is the actual element inside the cell
-                element = LoadElement(state, child, cell);
+                element = LoadElement(state, child, cell, isPaste);
                 break; // cell contains ONE element only (as per current design)
             }
 
@@ -212,10 +215,10 @@ namespace DMB.Core.Dmf
             return variable;
         }
 
-        public ElementModel? LoadElement(ModuleStateCore state, XElement node)
+        public ElementModel? LoadElement(ModuleStateCore state, XElement node, bool isPaste)
         {
             if (node.Name.LocalName == "Grid")
-                return LoadGrid(state, node, parentCell: null);
+                return LoadGrid(state, node, parentCell: null, isPaste);
 
             ElementModel el;
 
@@ -268,17 +271,18 @@ namespace DMB.Core.Dmf
             el.ParentCell = null;
 
             state.Register(el);
-            DmfReflect.ReadAll(node, el);
+            DmfReflect.ReadAll(node, el, isPaste);
 
             return el;
         }
 
-        public ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell)
+        public ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell
+            , bool isPaste)
         {
             if (node.Name.LocalName == "Grid")
-                return LoadGrid(state, node, parentCell);
+                return LoadGrid(state, node, parentCell, isPaste);
 
-            var el = LoadElement(state, node);
+            var el = LoadElement(state, node, isPaste);
             if (el == null)
                 return null;
 
@@ -286,7 +290,8 @@ namespace DMB.Core.Dmf
             return el;
         }
 
-        private void LoadDatasets(ModuleStateCore state, XElement? datasetsNode)
+        private void LoadDatasets(ModuleStateCore state, XElement? datasetsNode
+            , bool isPaste)
         {
             if (datasetsNode == null) return;
 
@@ -294,7 +299,7 @@ namespace DMB.Core.Dmf
             {
                 var ds = this.InitiateDatasetModel(state);
                 state.Register(ds);
-                DmfReflect.ReadAll(dsNode, ds);
+                DmfReflect.ReadAll(dsNode, ds, isPaste);
 
                 // Fields
                 var fieldsNode = dsNode.Element("Fields");
@@ -303,7 +308,7 @@ namespace DMB.Core.Dmf
                     foreach (var fNode in fieldsNode.Elements("Field"))
                     {
                         var f = this.InitiateDatasetFieldModel();
-                        DmfReflect.ReadAll(fNode, f);
+                        DmfReflect.ReadAll(fNode, f, isPaste);
                         ds.Fields.Add(f);
                     }
                 }
@@ -328,7 +333,7 @@ namespace DMB.Core.Dmf
             }
         }
 
-        private void LoadVariables(ModuleStateCore state, XElement? varsNode)
+        private void LoadVariables(ModuleStateCore state, XElement? varsNode, bool isPaste)
         {
             if (varsNode == null) return;
 
@@ -336,7 +341,7 @@ namespace DMB.Core.Dmf
             {
                 var v = this.InitiateVariableModel(state);
                 state.Register(v);
-                DmfReflect.ReadAll(vNode, v);
+                DmfReflect.ReadAll(vNode, v, isPaste);
             }
         }
 

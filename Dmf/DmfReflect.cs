@@ -19,11 +19,11 @@ namespace DMB.Core.Dmf
             WriteChildrenCollections(node, obj);
         }
 
-        public static void ReadAll(XElement node, object obj)
+        public static void ReadAll(XElement node, object obj, bool isPaste)
         {
-            ReadAttributes(node, obj);
+            ReadAttributes(node, obj, isPaste);
             ReadExpandable(node, obj);
-            ReadChildrenCollections(node, obj);
+            ReadChildrenCollections(node, obj, isPaste);
         }
 
         // ===== Existing (attributes) =====
@@ -49,7 +49,7 @@ namespace DMB.Core.Dmf
             }
         }
 
-        public static void ReadAttributes(XElement node, object obj)
+        public static void ReadAttributes(XElement node, object obj, bool isPaste)
         {
             var t = obj.GetType();
             var props = PropsCache.GetOrAdd(t, tt =>
@@ -59,6 +59,8 @@ namespace DMB.Core.Dmf
 
             foreach (var p in props)
             {
+                if (isPaste && p.Name == "Id")
+                    continue;
                 if (p.GetCustomAttribute<ExpandablePropertyAttribute>() != null)
                     continue;
 
@@ -123,11 +125,11 @@ namespace DMB.Core.Dmf
                         $"All properties marked with [ExpandableProperty] must be initialized in the constructor.");
                 }
 
-                ReadAll(childNode, current);
+                ReadAll(childNode, current, false);
             }
         }
 
-        private static void ReadChildrenCollections(XElement node, object model)
+        private static void ReadChildrenCollections(XElement node, object model, bool isPaste)
         {
             var t = model.GetType();
             var props = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -165,7 +167,7 @@ namespace DMB.Core.Dmf
                     var item = Activator.CreateInstance(itemType);
                     if (item == null) continue;
 
-                    ReadAll(itemNode, item);
+                    ReadAll(itemNode, item, isPaste);
                     addMethod.Invoke(collectionObj, new[] { item });
                 }
             }
