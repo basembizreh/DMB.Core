@@ -16,7 +16,11 @@ namespace DMB.Core.Elements
 		[Browsable(false)]
 		public List<CellModelCore> Cells { get; set; } = new();
 
-		public int RowIndex { get; set; }
+		//public int RowIndex { get; set; }
+		public int RowIndex 
+		{
+			get { return this.ParentGrid is null ? -1 : this.ParentGrid.Rows.IndexOf(this); } 
+		}
 
 		public override string GetElementNamePrefix() => "Row";
 	}
