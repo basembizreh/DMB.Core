@@ -14,7 +14,8 @@ namespace DMB.Core.Elements
 		public GridModelCore? ParentGrid { get; set; }
 
 		[Browsable(false)]
-		public List<CellModelCore> Cells { get; set; } = new();
+        [ChildElements]
+        public List<CellModelCore> Cells { get; set; } = new();
 
 		//public int RowIndex { get; set; }
 		public int RowIndex 

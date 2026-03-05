@@ -1,8 +1,10 @@
 ﻿using DMB.Core.Elements;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -81,78 +83,6 @@ namespace DMB.Core
 			return $"{prefix}_{max + 1}";
 		}
 
-        internal void EnsureUniqueIdsForSubtree(IModuleItem root)
-        {
-            foreach (var item in EnumerateSubtreeItems(root))
-            {
-                var id = (item.Id ?? "").Trim();
-                var (ok, _) = this.CanSetItemId(item, id);
-                if (ok && !string.IsNullOrWhiteSpace(id))
-                    continue;
-
-                item.Id = this.GenerateNextElementId(item);
-            }
-        }
-
-        private static IEnumerable<IModuleItem> EnumerateSubtreeItems(IModuleItem root)
-        {
-            // Grid => Rows => Cells => Elements (recursively)
-            if (root is GridModelCore g)
-            {
-                yield return g;
-
-                foreach (var row in g.Rows)
-                {
-                    yield return row;
-
-                    foreach (var cell in row.Cells)
-                    {
-                        yield return cell;
-
-                        if (cell.Element != null)
-                        {
-                            foreach (var x in EnumerateSubtreeItems(cell.Element))
-                                yield return x;
-                        }
-                    }
-                }
-
-                yield break;
-            }
-
-            // Row alone
-            if (root is RowModelCore r)
-            {
-                yield return r;
-
-                foreach (var cell in r.Cells)
-                {
-                    yield return cell;
-
-                    if (cell.Element != null)
-                        foreach (var x in EnumerateSubtreeItems(cell.Element))
-                            yield return x;
-                }
-
-                yield break;
-            }
-
-            // Cell alone
-            if (root is CellModelCore c)
-            {
-                yield return c;
-
-                if (c.Element != null)
-                    foreach (var x in EnumerateSubtreeItems(c.Element))
-                        yield return x;
-
-                yield break;
-            }
-
-            // Plain element / variable / dataset ... etc
-            yield return root;
-        }
-
         internal (bool ok, string error) CanSetItemId(IModuleItem? item, string newId)
         {
             newId = (newId ?? "").Trim();
@@ -179,11 +109,50 @@ namespace DMB.Core
 
 		public virtual void Register(IModuleItem item)
 		{
-			if (!this.AllItems.Contains(item))
-				this.AllItems.Add(item);
+            if (!this.AllItems.Contains(item))
+            {
+                item.Id = this.GenerateNextElementId(item);
+
+                var props = item.GetType().GetProperties().Where(p => p.GetCustomAttributes<ChildElementsAttribute>().Any());
+                if (props.Any())
+                {
+                    foreach (var prop in props)
+                    {
+                        var value = prop.GetValue(item, null);
+                        if (value is System.Collections.IEnumerable enumerable)
+                        {
+                            foreach (var obj in enumerable)
+                            {
+                                if (obj is IModuleItem child)
+                                    this.Register(child);
+                            }
+                        }
+                    }
+                }
+                this.AllItems.Add(item);
+            }
 		}
 
-		public virtual void Unregister(IModuleItem item) => this.AllItems.Remove(item);
+        public virtual void Unregister(IModuleItem item)
+        {
+            var props = item.GetType().GetProperties().Where(p => p.GetCustomAttributes<ChildElementsAttribute>().Any());
+            if (props.Any())
+            {
+                foreach (var prop in props)
+                {
+                    var value = prop.GetValue(item, null);
+                    if (value is System.Collections.IEnumerable enumerable)
+                    {
+                        foreach (var obj in enumerable)
+                        {
+                            if (obj is IModuleItem child)
+                                this.Unregister(child);
+                        }
+                    }
+                }
+            }
+            this.AllItems.Remove(item);
+        }
 
 		public virtual void Clear()
 		{

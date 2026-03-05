@@ -13,6 +13,7 @@ namespace DMB.Core.Elements
 		ElementModel(moduleState)
 	{
 		[Browsable(false)]
+		[ChildElements]
 		public List<RowModelCore> Rows { get; set; } = new();
 
 		public override string GetElementNamePrefix() => "Grid";

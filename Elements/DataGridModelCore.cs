@@ -18,6 +18,7 @@ namespace DMB.Core.Elements
         public DataGridModelCore(ModuleStateCore moduleState)
             : base(moduleState)
         {
+            this.ToolBarGrid = new GridModelCore(this.ModuleStateCore);
         }
 
         [Dmf]
@@ -50,6 +51,9 @@ namespace DMB.Core.Elements
         }
 
         [Dmf]
+        public virtual bool HasToolbar { get; set; }
+
+        [Dmf]
         public virtual bool Hover { get; set; } = true;
 
         [Dmf]
@@ -75,5 +79,8 @@ namespace DMB.Core.Elements
                 column.DataGridId = newId;
             }
         }
+
+        //[DmfChildren()]
+        public virtual GridModelCore ToolBarGrid { get; set; }
     }
 }

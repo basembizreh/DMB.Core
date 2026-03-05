@@ -17,14 +17,13 @@ namespace DMB.Core.Elements
 		public ButtonModelCore(ModuleStateCore moduleState)
 			: base(moduleState)
 		{
-			this.Text = this.Id;
 			this.Color = new ExpressionablePropertyCore<Color>() { Value = MudBlazor.Color.Default };
 		}
 
 		public override string GetElementNamePrefix() => "Button";
 
 		[Dmf]
-		public virtual string Text { get; set; } = "";
+		public virtual string Text { get; set; } = "Button";
 
 		[Dmf]
 		[ExpandableProperty]
