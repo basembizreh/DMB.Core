@@ -89,13 +89,14 @@ namespace DMB.Core.Elements
         protected override void OnIdChanged(string oldId, string newId)
         {
             base.OnIdChanged(oldId, newId);
-            foreach (var column in this.Columns)
-            {
-                column.DataGridId = newId;
-            }
+            this.Columns.DataGridId = newId;
         }
 
-        [DmfChildren("Toolbar", "Grid")]
+        protected virtual GridModelCore CreateToolbarGridForLoad()
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual GridModelCore? ToolBarGrid 
         {
             get

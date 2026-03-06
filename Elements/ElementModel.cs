@@ -24,7 +24,7 @@ namespace DMB.Core.Elements
 		public ModuleStateCore ModuleStateCore => this._moduleState;
 
 		[Dmf]
-		public string Id
+		public virtual string Id
 		{
 			get => _id;
 			set

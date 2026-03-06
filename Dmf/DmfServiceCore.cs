@@ -227,43 +227,33 @@ namespace DMB.Core.Dmf
                 case "Button":
                     el = this.InitiateButtonModel(state);
                     break;
-
                 case "TextBlock":
                     el = this.InitiateTextBlockModel(state);
                     break;
-
                 case "TextInput":
                     el = this.InitiateTextInputModel(state);
                     break;
-
                 case "Select":
                     el = this.InitiateSelectModel(state);
                     break;
-
                 case "Switch":
                     el = this.InitiateSwitchModel(state);
                     break;
-
                 case "CheckBox":
                     el = this.InitiateCheckBoxModel(state);
                     break;
-
                 case "DatePicker":
                     el = this.InitiateDatePickerModel(state);
                     break;
-
                 case "TimePicker":
                     el = this.InitiateTimePickerModel(state);
                     break;
-
                 case "Image":
                     el = this.InitiateImageModel(state);
                     break;
-
                 case "DataGrid":
                     el = this.InitiateDataGridModel(state);
                     break;
-
                 default:
                     return null;
             }
@@ -272,6 +262,20 @@ namespace DMB.Core.Dmf
 
             state.Register(el, isPaste);
             DmfReflect.ReadAll(node, el, isPaste);
+
+            // Special handling for DataGrid toolbar
+            if (el is DataGridModelCore<DC> dg)
+            {
+                var toolbarWrapper = node.Element(nameof(dg.ToolBarGrid));
+                var toolbarGridNode = toolbarWrapper?.Element("Grid");
+
+                if (toolbarGridNode != null)
+                {
+                    var toolbarGrid = LoadGrid(state, toolbarGridNode, parentCell: null, isPaste);
+                    dg.ToolBarGrid = toolbarGrid;
+                    dg.HasToolbar = true;
+                }
+            }
 
             return el;
         }
@@ -383,9 +387,25 @@ namespace DMB.Core.Dmf
             if (el is GridModelCore g)
                 return SaveGrid(g);
 
-            var node = NewNode(el);
-            DmfReflect.WriteAll(node, el);
-            return node;
+            if (el is DataGridModelCore<DC> dg)
+            {
+                var node = NewNode(el);
+                DmfReflect.WriteAll(node, el);
+
+                if (dg.ToolBarGrid != null)
+                {
+                    var toolbarNode = new XElement(nameof(dg.ToolBarGrid));
+                    toolbarNode.Add(SaveGrid(dg.ToolBarGrid));
+                    node.Add(toolbarNode);
+                }
+
+                return node;
+            }
+
+
+            var normalNode = NewNode(el);
+            DmfReflect.WriteAll(normalNode, el);
+            return normalNode;
         }
 
         private static XElement NewNode(object obj)

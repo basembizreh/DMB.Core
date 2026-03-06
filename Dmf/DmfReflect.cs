@@ -16,6 +16,7 @@ namespace DMB.Core.Dmf
         {
             WriteAttributes(node, obj);
             WriteExpandable(node, obj);
+            WriteChildObjects(node, obj);          
             WriteChildrenCollections(node, obj);
         }
 
@@ -23,6 +24,7 @@ namespace DMB.Core.Dmf
         {
             ReadAttributes(node, obj, isPaste);
             ReadExpandable(node, obj);
+            ReadChildObjects(node, obj, isPaste); 
             ReadChildrenCollections(node, obj, isPaste);
         }
 
@@ -70,6 +72,76 @@ namespace DMB.Core.Dmf
 
                 if (TryParseValue(p.PropertyType, xAttr.Value, out var parsed))
                     p.SetValue(obj, parsed);
+            }
+        }
+
+        private static void WriteChildObjects(XElement node, object model)
+        {
+            var props = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var p in props)
+            {
+                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+                              .OfType<DmfChildAttribute>()
+                              .FirstOrDefault();
+                if (chAttr is null) continue;
+
+                var value = p.GetValue(model);
+                if (value is null) continue;
+
+                var childNode = new XElement(chAttr.ElementName);
+                WriteAll(childNode, value);
+                node.Add(childNode);
+            }
+        }
+
+        private static void ReadChildObjects(XElement node, object model, bool isPaste)
+        {
+            var props = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var p in props)
+            {
+                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+                              .OfType<DmfChildAttribute>()
+                              .FirstOrDefault();
+                if (chAttr is null) continue;
+
+                var childNode = node.Element(chAttr.ElementName);
+                if (childNode == null) continue;
+
+                var current = p.GetValue(model);
+
+                if (current == null)
+                {
+                    if (string.IsNullOrWhiteSpace(chAttr.FactoryMethodName))
+                    {
+                        throw new InvalidOperationException(
+                            $"DmfChild property '{model.GetType().Name}.{p.Name}' is null during Load, " +
+                            $"and no factory method was provided.");
+                    }
+
+                    var factory = model.GetType().GetMethod(
+                        chAttr.FactoryMethodName,
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+                    if (factory == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Factory method '{chAttr.FactoryMethodName}' was not found on type '{model.GetType().Name}'.");
+                    }
+
+                    current = factory.Invoke(model, null);
+
+                    if (current == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Factory method '{chAttr.FactoryMethodName}' returned null for '{model.GetType().Name}.{p.Name}'.");
+                    }
+
+                    p.SetValue(model, current);
+                }
+
+                ReadAll(childNode, current, isPaste);
             }
         }
 

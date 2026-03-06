@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace DMB.Core
 {
     public sealed class DataGridColumnsCollection<T> : Collection<T>
-    where T : DataGridColumnModelCore
+        where T : DataGridColumnModelCore
     {
         private readonly ModuleStateCore _moduleStatus;
         private string _dataGridId;
@@ -18,7 +18,14 @@ namespace DMB.Core
         public DataGridColumnsCollection(ModuleStateCore moduleState, string dataGridId)
         {
             _moduleStatus = moduleState;
-            _dataGridId = dataGridId;
+            this._dataGridId = dataGridId;
+        }
+
+        public string DataGridId
+        {
+
+            get { return this._dataGridId; }
+            set { this._dataGridId = value; }
         }
 
         public ModuleStateCore? ModuleState => _moduleStatus;
@@ -30,7 +37,7 @@ namespace DMB.Core
             this.Changed?.Invoke();
         }
 
-        public bool SuspendChanged { get; set; } // NEW
+        public bool SuspendChanged { get; set; } 
 
         protected override void InsertItem(int index, T item)
         {

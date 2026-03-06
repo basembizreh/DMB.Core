@@ -1,4 +1,5 @@
 ﻿using DMB.Core;
+using DMB.Core.Dmf;
 using DMB.Core.Elements;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace DMB.Core.Elements
 	{
 		[Browsable(false)]
 		[ChildElements]
-		public List<RowModelCore> Rows { get; set; } = new();
+        public List<RowModelCore> Rows { get; set; } = new();
 
 		public override string GetElementNamePrefix() => "Grid";
 
