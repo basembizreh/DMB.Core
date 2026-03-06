@@ -73,8 +73,8 @@ namespace DMB.Core.Dmf
             var grid = this.InitiateGridModel(state);
             grid.ParentCell = parentCell;
 
-            state.Register(grid);
             DmfReflect.ReadAll(node, grid, isPaste);
+            state.Register(grid, isPaste);
 
             foreach (var rowNode in node.Elements("Row"))
             {
@@ -94,8 +94,8 @@ namespace DMB.Core.Dmf
             var row = this.InitiateRowModel(state);
             row.ParentGrid = parentGrid;
 
-            state.Register(row);
             DmfReflect.ReadAll(node, row, isPaste);
+            state.Register(row, isPaste);
 
             foreach (var cellNode in node.Elements("Cell"))
             {
@@ -117,8 +117,8 @@ namespace DMB.Core.Dmf
         {
             var cell = this.InitiateCellModel(state, parentRow);
 
-            state.Register(cell);
             DmfReflect.ReadAll(node, cell, isPaste);
+            state.Register(cell, isPaste);
 
             // Load expandable properties first, then load the single child element (if any)
             ElementModel? element = null;
@@ -270,7 +270,7 @@ namespace DMB.Core.Dmf
 
             el.ParentCell = null;
 
-            state.Register(el);
+            state.Register(el, isPaste);
             DmfReflect.ReadAll(node, el, isPaste);
 
             return el;

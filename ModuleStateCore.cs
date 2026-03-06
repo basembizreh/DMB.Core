@@ -107,11 +107,17 @@ namespace DMB.Core
 
 		public void RaiseStateChanged() => this.StateChanged?.Invoke();
 
-		public virtual void Register(IModuleItem item)
+		public virtual void Register(IModuleItem item, bool autoAssignId = true)
 		{
             if (!this.AllItems.Contains(item))
             {
-                item.Id = this.GenerateNextElementId(item);
+                if (string.IsNullOrWhiteSpace(item.Id))
+                {
+                    if (autoAssignId)
+                    {
+                        item.Id = this.GenerateNextElementId(item);
+                    }
+                }
 
                 var props = item.GetType().GetProperties().Where(p => p.GetCustomAttributes<ChildElementsAttribute>().Any());
                 if (props.Any())

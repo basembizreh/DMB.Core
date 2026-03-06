@@ -12,13 +12,12 @@ namespace DMB.Core.Elements
         where T : DataGridColumnModelCore
     {
         private DataGridColumnsCollection<T>? _columns;
-
+        private GridModelCore? _toolbarGrid;
         private string? _dataset;
 
         public DataGridModelCore(ModuleStateCore moduleState)
             : base(moduleState)
         {
-            this.ToolBarGrid = new GridModelCore(this.ModuleStateCore);
         }
 
         [Dmf]
@@ -37,6 +36,11 @@ namespace DMB.Core.Elements
             }
         }
 
+        protected virtual GridModelCore InstantiateAndRegisterToobarGrid()
+        {
+            throw new NotImplementedException();
+        }
+
         [DmfChildren("Columns", "Column")]
         public virtual DataGridColumnsCollection<T> Columns
         {
@@ -47,6 +51,17 @@ namespace DMB.Core.Elements
                     this._columns = new DataGridColumnsCollection<T>(this.ModuleStateCore, this.Id);
                 }
                 return this._columns;
+            }
+        }
+
+        public virtual void EnsureToolbarGrid()
+        {
+            if (!this.HasToolbar)
+                return;
+
+            if (this._toolbarGrid == null)
+            {
+                this._toolbarGrid = this.InstantiateAndRegisterToobarGrid();
             }
         }
 
@@ -80,7 +95,17 @@ namespace DMB.Core.Elements
             }
         }
 
-        //[DmfChildren()]
-        public virtual GridModelCore ToolBarGrid { get; set; }
+        [DmfChildren("Toolbar", "Grid")]
+        public virtual GridModelCore? ToolBarGrid 
+        {
+            get
+            {
+                return this._toolbarGrid;
+            }
+            set
+            {
+                this._toolbarGrid = value;
+            }
+        }
     }
 }

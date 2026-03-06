@@ -17,5 +17,7 @@ namespace DMB.Core.Elements
 		public List<RowModelCore> Rows { get; set; } = new();
 
 		public override string GetElementNamePrefix() => "Grid";
-	}
+
+        public ElementModel? Parent { get; set; }
+    }
 }
