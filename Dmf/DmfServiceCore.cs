@@ -1,7 +1,8 @@
-﻿using System;
+﻿using DMB.Core.Elements;
+using System;
+using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
-using DMB.Core.Elements;
 
 namespace DMB.Core.Dmf
 {
@@ -36,6 +37,48 @@ namespace DMB.Core.Dmf
         {
             var row = new RowModelCore(state);
             return row;
+        }
+
+        public GridModelCore? LoadFromXml(ModuleStateCore state, string xml, bool isPaste)
+        {
+            var doc = XDocument.Parse(xml);
+
+            var version = doc.Root?.Attribute("version")?.Value;
+            if (version != DmfConstants.CurrentVersion)
+                throw new Exception($"Unsupported DMF version: {version}");
+
+            state.Clear();
+            state.Globals["Language"] = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+
+            this.LoadDatasets(state, doc.Root?.Element("Datasets"), isPaste);
+            this.LoadVariables(state, doc.Root?.Element("Variables"), isPaste);
+
+            var gridNode = doc.Root?.Element("Grid");
+            if (gridNode == null)
+                return null;
+
+            var rootGrid = LoadGrid(state, gridNode, null, isPaste);
+            state.SetMainGrid(rootGrid);
+            state.RaiseStateChanged();
+
+            return rootGrid;
+        }
+
+        public string SaveToXml(ModuleStateCore state)
+        {
+            var rootGrid = state.GetMainGrid();
+            if (rootGrid == null)
+                return "";
+
+            var module = new XElement("Module",
+                new XAttribute("version", DmfConstants.CurrentVersion));
+
+            module.Add(SaveGrid(rootGrid));
+            module.Add(SaveDatasets(state));
+            module.Add(SaveVariables(state));
+
+            var doc = new XDocument(module);
+            return doc.ToString();
         }
 
         public GridModelCore? Load(ModuleStateCore state, string filePath, bool isPaste)
