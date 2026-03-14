@@ -25,7 +25,7 @@ namespace DMB.Core.Elements
         public virtual string? Field { get; set; }
 
         [Browsable(false)]
-        public ModuleStateCore ModuleStateCore { get; set; } = default!;
+        public ModuleDocumentCore ModuleDocumentCore { get; set; } = default!;
 
         [Browsable(false)]
         public virtual string? DataGridId { get; set; }
@@ -36,7 +36,7 @@ namespace DMB.Core.Elements
             get
             {
                 if (!string.IsNullOrWhiteSpace(this.DataGridId)
-                    && this.ModuleStateCore.TryGetItemById(this.DataGridId, out var item)
+                    && this.ModuleDocumentCore.TryGetItemById(this.DataGridId, out var item)
                     && item is IDatasetBound dataGrid)
                 {
                     return dataGrid.Dataset;

@@ -10,18 +10,18 @@ namespace DMB.Core.Elements
 {
 	public abstract class ElementModel : IModuleItem
 	{
-		private ModuleStateCore _moduleState;
+		private ModuleDocumentCore _moduleDocument;
 		private string _id = "";
 
-		protected ElementModel(ModuleStateCore moduleState)
+		protected ElementModel(ModuleDocumentCore moduleDocument)
 		{
-			this._moduleState = moduleState;
+			this._moduleDocument = moduleDocument;
 			//this.Id = moduleState.GenerateNextElementId(this);
 			this.Visible = new ExpressionablePropertyCore<bool>() { Value = true };
         }
 
 		[Browsable(false)]
-		public ModuleStateCore ModuleStateCore => this._moduleState;
+		public ModuleDocumentCore ModuleDocumentCore => this._moduleDocument;
 
 		[Dmf]
 		public virtual string Id
@@ -29,7 +29,7 @@ namespace DMB.Core.Elements
 			get => _id;
 			set
 			{
-				var (ok, error) = this._moduleState.CanSetItemId(this, value);
+				var (ok, error) = this._moduleDocument.CanSetItemId(this, value);
 				if (!ok)
 				{
 					throw new Exception(error);
@@ -39,13 +39,13 @@ namespace DMB.Core.Elements
 				this._id = value!.Trim();
 
 				this.OnIdChanged(oldId, value);
-				this._moduleState.RaiseItemIdChanged(this, oldId, this._id);
+				this._moduleDocument.RaiseItemIdChanged(this, oldId, this._id);
 			}
 		}
 
 		protected virtual void OnIdChanged(string oldId, string newId) 
 		{
-            this.ModuleStateCore.MarkItemsChanged();
+            this.ModuleDocumentCore.MarkItemsChanged();
         }
 		
 		[Dmf]

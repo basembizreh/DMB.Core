@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class RowModelCore(ModuleStateCore moduleState) :
-		ElementModel(moduleState)
+	public class RowModelCore(ModuleDocumentCore moduleDocument) :
+		ElementModel(moduleDocument)
 	{
 		[Browsable(false)]
 		public GridModelCore? ParentGrid { get; set; }

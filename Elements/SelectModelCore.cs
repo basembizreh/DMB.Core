@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class SelectModelCore(ModuleStateCore moduleState) : ElementModel(moduleState), IDatasetBound
+	public class SelectModelCore(ModuleDocumentCore moduleDocument) : ElementModel(moduleDocument), IDatasetBound
     {
         public override string GetElementNamePrefix() => "Select";
 		private string? _dataset;

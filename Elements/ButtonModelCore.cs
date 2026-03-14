@@ -14,8 +14,8 @@ namespace DMB.Core.Elements
 {
 	public class ButtonModelCore : ElementModel
 	{
-		public ButtonModelCore(ModuleStateCore moduleState)
-			: base(moduleState)
+		public ButtonModelCore(ModuleDocumentCore moduleDocument)
+			: base(moduleDocument)
 		{
 			this.Color = new ExpressionablePropertyCore<Color>() { Value = MudBlazor.Color.Default };
 		}

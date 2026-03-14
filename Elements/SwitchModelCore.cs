@@ -10,7 +10,7 @@ namespace DMB.Core.Elements
 {
     public class SwitchModelCore : ElementModel, IInputField
     {
-        public SwitchModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public SwitchModelCore(ModuleDocumentCore moduleDocument) : base(moduleDocument) { }
 
         public override string GetElementNamePrefix() => "Switch";
 

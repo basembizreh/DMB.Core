@@ -12,8 +12,8 @@ namespace DMB.Core.Elements
     {
         private readonly RowModelCore _parentRow;
 
-        public CellModelCore(ModuleStateCore moduleState, RowModelCore parentRow)
-            : base(moduleState)
+        public CellModelCore(ModuleDocumentCore moduleDocument, RowModelCore parentRow)
+            : base(moduleDocument)
         {
             this._parentRow = parentRow;
             this.HorizontalAlignment = new ExpressionablePropertyCore<ContentAlignment>() { Value = ContentAlignment.Start };

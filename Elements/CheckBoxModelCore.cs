@@ -11,7 +11,7 @@ namespace DMB.Core.Elements
 {
     public class CheckBoxModelCore : ElementModel
     {
-        public CheckBoxModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public CheckBoxModelCore(ModuleDocumentCore moduleDocument) : base(moduleDocument) { }
 
         public override string GetElementNamePrefix() => "Checkbox";
 

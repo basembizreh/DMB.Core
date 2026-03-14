@@ -15,8 +15,8 @@ namespace DMB.Core.Elements
         private GridModelCore? _toolbarGrid;
         private string? _dataset;
 
-        public DataGridModelCore(ModuleStateCore moduleState)
-            : base(moduleState)
+        public DataGridModelCore(ModuleDocumentCore moduleDocument)
+            : base(moduleDocument)
         {
         }
 
@@ -48,7 +48,7 @@ namespace DMB.Core.Elements
             {
                 if (this._columns is null)
                 {
-                    this._columns = new DataGridColumnsCollection<T>(this.ModuleStateCore, this.Id);
+                    this._columns = new DataGridColumnsCollection<T>(this.ModuleDocumentCore, this.Id);
                 }
                 return this._columns;
             }
@@ -92,7 +92,7 @@ namespace DMB.Core.Elements
             this.Columns.DataGridId = newId;
         }
 
-        protected virtual GridModelCore CreateToolbarGridForLoad()
+        protected virtual GridModelCore? CreateToolbarGridForLoad()
         {
             throw new NotImplementedException();
         }

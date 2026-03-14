@@ -12,12 +12,12 @@ namespace DMB.Core
     public sealed class DataGridColumnsCollection<T> : Collection<T>
         where T : DataGridColumnModelCore
     {
-        private readonly ModuleStateCore _moduleStatus;
+        private readonly ModuleDocumentCore _moduleDocument;
         private string _dataGridId;
 
-        public DataGridColumnsCollection(ModuleStateCore moduleState, string dataGridId)
+        public DataGridColumnsCollection(ModuleDocumentCore moduleDocument, string dataGridId)
         {
-            _moduleStatus = moduleState;
+            this._moduleDocument = moduleDocument;
             this._dataGridId = dataGridId;
         }
 
@@ -28,7 +28,7 @@ namespace DMB.Core
             set { this._dataGridId = value; }
         }
 
-        public ModuleStateCore? ModuleState => _moduleStatus;
+        public ModuleDocumentCore? ModuleState => this._moduleDocument;
 
         public event Action? Changed;
 
@@ -41,7 +41,7 @@ namespace DMB.Core
 
         protected override void InsertItem(int index, T item)
         {
-            item.ModuleStateCore = _moduleStatus;
+            item.ModuleDocumentCore = this._moduleDocument;
             item.DataGridId = _dataGridId;
             base.InsertItem(index, item);
             if (!SuspendChanged) Changed?.Invoke();
@@ -49,7 +49,7 @@ namespace DMB.Core
 
         protected override void SetItem(int index, T item)
         {
-            item.ModuleStateCore = _moduleStatus;
+            item.ModuleDocumentCore = this._moduleDocument;
             item.DataGridId = _dataGridId;
             base.SetItem(index, item);
             if (!SuspendChanged) Changed?.Invoke();

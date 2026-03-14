@@ -12,8 +12,8 @@ namespace DMB.Core.Elements
 {
     public class TextBlockModelCore : ElementModel
     {
-        public TextBlockModelCore(ModuleStateCore moduleState)
-            : base(moduleState)
+        public TextBlockModelCore(ModuleDocumentCore moduleDocument)
+            : base(moduleDocument)
         {
             this.TextAlign = new ExpressionablePropertyCore<MudBlazor.Align>();
             this.Color = new ExpressionablePropertyCore<MudBlazor.Color>();

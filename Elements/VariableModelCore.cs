@@ -9,15 +9,15 @@ namespace DMB.Core.Elements
 {
 	public class VariableModelCore : IModuleItem, IValueElement
 	{
-		private readonly ModuleStateCore _moduleState;
+		private readonly ModuleDocumentCore _moduleDocument;
 		private string _id = "";
 
-		public VariableModelCore(ModuleStateCore moduleState)
+		public VariableModelCore(ModuleDocumentCore moduleDocument)
 		{
-			this._moduleState = moduleState;
+			this._moduleDocument = moduleDocument;
 		}
 
-		public ModuleStateCore ModuleState => this._moduleState;
+		public ModuleDocumentCore ModuleState => this._moduleDocument;
 
         [Dmf]
 		public string Name
@@ -34,7 +34,7 @@ namespace DMB.Core.Elements
 			get => this._id;
 			set
 			{
-				var (ok, error) = this._moduleState.CanSetItemId(this, value);
+				var (ok, error) = this._moduleDocument.CanSetItemId(this, value);
 				if (!ok)
 				{
 					throw new Exception(error);

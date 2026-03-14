@@ -13,8 +13,8 @@ namespace DMB.Core.Elements
     {
         private string? ValueText;
 
-        public TextInputModelCore(ModuleStateCore moduleState)
-			: base(moduleState)
+        public TextInputModelCore(ModuleDocumentCore moduleDocument)
+			: base(moduleDocument)
 		{
 			this.Label = this.Id;
 			this.Color = new ExpressionablePropertyCore<MudBlazor.Color>() { Value = MudBlazor.Color.Default };

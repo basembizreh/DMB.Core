@@ -2,6 +2,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Xml.Linq;
 
 namespace DMB.Core.Dmf
@@ -11,35 +12,35 @@ namespace DMB.Core.Dmf
         where DF : DatasetFieldModelCore, new()
         where DC : DataGridColumnModelCore
     {
-        public void Save(ModuleStateCore state, string filePath)
+        public void Save(ModuleDocumentCore document, string filePath)
         {
-            var rootGrid = state.GetMainGrid();
+            var rootGrid = document.GetMainGrid();
             if (rootGrid == null) return;
 
             var module = new XElement("Module",
                 new XAttribute("version", DmfConstants.CurrentVersion));
 
-            module.Add(SaveGrid(rootGrid));
-            module.Add(SaveDatasets(state));
-            module.Add(SaveVariables(state));
+            module.Add(this.SaveGrid(rootGrid));
+            module.Add(this.SaveDatasets(document));
+            module.Add(this.SaveVariables(document));
 
             var doc = new XDocument(module);
             doc.Save(filePath);
         }
 
-        protected virtual GridModelCore InitiateGridModel(ModuleStateCore state)
+        protected virtual GridModelCore InitiateGridModel(ModuleDocumentCore document)
         {
-            var grid = new GridModelCore(state);
+            var grid = new GridModelCore(document);
             return grid;
         }
 
-        protected virtual RowModelCore InitiateRowModel(ModuleStateCore state)
+        protected virtual RowModelCore InitiateRowModel(ModuleDocumentCore document)
         {
-            var row = new RowModelCore(state);
+            var row = new RowModelCore(document);
             return row;
         }
 
-        public GridModelCore? LoadFromXml(ModuleStateCore state, string xml, bool isPaste)
+        public GridModelCore? LoadFromXml(ModuleDocumentCore document, string xml, bool isPaste)
         {
             var doc = XDocument.Parse(xml);
 
@@ -47,41 +48,41 @@ namespace DMB.Core.Dmf
             if (version != DmfConstants.CurrentVersion)
                 throw new Exception($"Unsupported DMF version: {version}");
 
-            state.Clear();
-            state.Globals["Language"] = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            document.Clear();
+            document.Globals["Language"] = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
-            this.LoadDatasets(state, doc.Root?.Element("Datasets"), isPaste);
-            this.LoadVariables(state, doc.Root?.Element("Variables"), isPaste);
+            this.LoadDatasets(document, doc.Root?.Element("Datasets"), isPaste);
+            this.LoadVariables(document, doc.Root?.Element("Variables"), isPaste);
 
             var gridNode = doc.Root?.Element("Grid");
             if (gridNode == null)
                 return null;
 
-            var rootGrid = LoadGrid(state, gridNode, null, isPaste);
-            state.SetMainGrid(rootGrid);
-            state.RaiseStateChanged();
+            var rootGrid = LoadGrid(document, gridNode, null, isPaste);
+            document.SetMainGrid(rootGrid);
+            document.RaiseStateChanged();
 
             return rootGrid;
         }
 
-        public string SaveToXml(ModuleStateCore state)
+        public string SaveToXml(ModuleDocumentCore document)
         {
-            var rootGrid = state.GetMainGrid();
+            var rootGrid = document.GetMainGrid();
             if (rootGrid == null)
                 return "";
 
             var module = new XElement("Module",
                 new XAttribute("version", DmfConstants.CurrentVersion));
 
-            module.Add(SaveGrid(rootGrid));
-            module.Add(SaveDatasets(state));
-            module.Add(SaveVariables(state));
+            module.Add(this.SaveGrid(rootGrid));
+            module.Add(this.SaveDatasets(document));
+            module.Add(this.SaveVariables(document));
 
             var doc = new XDocument(module);
             return doc.ToString();
         }
 
-        public GridModelCore? Load(ModuleStateCore state, string filePath, bool isPaste)
+        public GridModelCore? Load(ModuleDocumentCore document, string filePath, bool isPaste)
         {
             var doc = XDocument.Load(filePath);
 
@@ -91,37 +92,37 @@ namespace DMB.Core.Dmf
                 throw new Exception($"Unsupported DMF version: {version}");
             }
 
-            state.Clear();
+            document.Clear();
 
             // Keep language available as a global for expressions
-            state.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            document.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
-            this.LoadDatasets(state, doc.Root?.Element("Datasets"), isPaste);
-            this.LoadVariables(state, doc.Root?.Element("Variables"), isPaste);
+            this.LoadDatasets(document, doc.Root?.Element("Datasets"), isPaste);
+            this.LoadVariables(document, doc.Root?.Element("Variables"), isPaste);
 
             var gridNode = doc.Root?.Element("Grid");
             if (gridNode == null)
                 return null;
 
-            var rootGrid = LoadGrid(state, gridNode, null, isPaste);
-            state.SetMainGrid(rootGrid);
+            var rootGrid = LoadGrid(document, gridNode, null, isPaste);
+            document.SetMainGrid(rootGrid);
 
-            state.RaiseStateChanged();
+            document.RaiseStateChanged();
             return rootGrid;
         }
 
-        private GridModelCore LoadGrid(ModuleStateCore state, XElement node, CellModelCore? parentCell
+        private GridModelCore LoadGrid(ModuleDocumentCore document, XElement node, CellModelCore? parentCell
             , bool isPaste)
         {
-            var grid = this.InitiateGridModel(state);
+            var grid = this.InitiateGridModel(document);
             grid.ParentCell = parentCell;
 
             DmfReflect.ReadAll(node, grid, isPaste);
-            state.Register(grid, isPaste);
+            document.Register(grid, isPaste);
 
             foreach (var rowNode in node.Elements("Row"))
             {
-                var row = LoadRow(state, rowNode, grid, isPaste);
+                var row = LoadRow(document, rowNode, grid, isPaste);
                 grid.Rows.Add(row);
             }
 
@@ -131,37 +132,37 @@ namespace DMB.Core.Dmf
             return grid;
         }
 
-        private RowModelCore LoadRow(ModuleStateCore state, XElement node, GridModelCore parentGrid
+        private RowModelCore LoadRow(ModuleDocumentCore document, XElement node, GridModelCore parentGrid
             , bool isPaste)
         {
-            var row = this.InitiateRowModel(state);
+            var row = this.InitiateRowModel(document);
             row.ParentGrid = parentGrid;
 
             DmfReflect.ReadAll(node, row, isPaste);
-            state.Register(row, isPaste);
+            document.Register(row, isPaste);
 
             foreach (var cellNode in node.Elements("Cell"))
             {
-                var cell = LoadCell(state, cellNode, row, isPaste);
+                var cell = LoadCell(document, cellNode, row, isPaste);
                 row.Cells.Add(cell);
             }
 
             return row;
         }
 
-        protected virtual CellModelCore InitiateCellModel(ModuleStateCore state, RowModelCore parentRow)
+        protected virtual CellModelCore InitiateCellModel(ModuleDocumentCore document, RowModelCore parentRow)
         {
-            var cell = new CellModelCore(state, parentRow);
+            var cell = new CellModelCore(document, parentRow);
             return cell;
         }
 
-        private CellModelCore LoadCell(ModuleStateCore state, XElement node, RowModelCore parentRow
+        private CellModelCore LoadCell(ModuleDocumentCore document, XElement node, RowModelCore parentRow
             , bool isPaste)
         {
-            var cell = this.InitiateCellModel(state, parentRow);
+            var cell = this.InitiateCellModel(document, parentRow);
 
             DmfReflect.ReadAll(node, cell, isPaste);
-            state.Register(cell, isPaste);
+            document.Register(cell, isPaste);
 
             // Load expandable properties first, then load the single child element (if any)
             ElementModel? element = null;
@@ -173,7 +174,7 @@ namespace DMB.Core.Dmf
                     continue;
 
                 // First non-expandable child is the actual element inside the cell
-                element = LoadElement(state, child, cell, isPaste);
+                element = LoadElement(document, child, cell, isPaste);
                 break; // cell contains ONE element only (as per current design)
             }
 
@@ -181,68 +182,68 @@ namespace DMB.Core.Dmf
             return cell;
         }
 
-        protected virtual ButtonModelCore InitiateButtonModel(ModuleStateCore state)
+        protected virtual ButtonModelCore InitiateButtonModel(ModuleDocumentCore document)
         {
-            var button = new ButtonModelCore(state);
+            var button = new ButtonModelCore(document);
             return button;
         }
 
-        protected virtual TextBlockModelCore InitiateTextBlockModel(ModuleStateCore state)
+        protected virtual TextBlockModelCore InitiateTextBlockModel(ModuleDocumentCore document)
         {
-            var tb = new TextBlockModelCore(state);
+            var tb = new TextBlockModelCore(document);
             return tb;
         }
 
-        protected virtual TextInputModelCore InitiateTextInputModel(ModuleStateCore state)
+        protected virtual TextInputModelCore InitiateTextInputModel(ModuleDocumentCore document)
         {
-            var ti = new TextInputModelCore(state);
+            var ti = new TextInputModelCore(document);
             return ti;
         }
 
-        protected virtual SelectModelCore InitiateSelectModel(ModuleStateCore state)
+        protected virtual SelectModelCore InitiateSelectModel(ModuleDocumentCore document)
         {
-            var select = new SelectModelCore(state);
+            var select = new SelectModelCore(document);
             return select;
         }
 
-        protected virtual SwitchModelCore InitiateSwitchModel(ModuleStateCore state)
+        protected virtual SwitchModelCore InitiateSwitchModel(ModuleDocumentCore document)
         {
-            var sw = new SwitchModelCore(state);
+            var sw = new SwitchModelCore(document);
             return sw;
         }
 
-        protected virtual CheckBoxModelCore InitiateCheckBoxModel(ModuleStateCore state)
+        protected virtual CheckBoxModelCore InitiateCheckBoxModel(ModuleDocumentCore document)
         {
-            var cb = new CheckBoxModelCore(state);
+            var cb = new CheckBoxModelCore(document);
             return cb;
         }
 
-        protected virtual DatePickerModelCore InitiateDatePickerModel(ModuleStateCore state)
+        protected virtual DatePickerModelCore InitiateDatePickerModel(ModuleDocumentCore document)
         {
-            var dp = new DatePickerModelCore(state);
+            var dp = new DatePickerModelCore(document);
             return dp;
         }
 
-        protected virtual TimePickerModelCore InitiateTimePickerModel(ModuleStateCore state)
+        protected virtual TimePickerModelCore InitiateTimePickerModel(ModuleDocumentCore document)
         {
-            var tp = new TimePickerModelCore(state);
+            var tp = new TimePickerModelCore(document);
             return tp;
         }
 
-        protected virtual ImageModelCore InitiateImageModel(ModuleStateCore state)
+        protected virtual ImageModelCore InitiateImageModel(ModuleDocumentCore document)
         {
-            var img = new ImageModelCore(state);
+            var img = new ImageModelCore(document);
             return img;
         }
 
-        protected virtual DataGridModelCore<DC> InitiateDataGridModel(ModuleStateCore state)
+        protected virtual DataGridModelCore<DC> InitiateDataGridModel(ModuleDocumentCore document)
         {
-            var dg = new DataGridModelCore<DC>(state);
+            var dg = new DataGridModelCore<DC>(document);
             return dg;
         }
 
-        protected virtual DS InitiateDatasetModel(ModuleStateCore state) =>
-            (DS)Activator.CreateInstance(typeof(DS), state)!;
+        protected virtual DS InitiateDatasetModel(ModuleDocumentCore document) =>
+            (DS)Activator.CreateInstance(typeof(DS), document)!;
 
         protected virtual DF InitiateDatasetFieldModel() => new DF();
 
@@ -252,50 +253,50 @@ namespace DMB.Core.Dmf
             return row;
         }
 
-        protected virtual VariableModelCore InitiateVariableModel(ModuleStateCore state)
+        protected virtual VariableModelCore InitiateVariableModel(ModuleDocumentCore document)
         {
-            var variable = new VariableModelCore(state);
+            var variable = new VariableModelCore(document);
             return variable;
         }
 
-        public ElementModel? LoadElement(ModuleStateCore state, XElement node, bool isPaste)
+        public ElementModel? LoadElement(ModuleDocumentCore document, XElement node, bool isPaste)
         {
             if (node.Name.LocalName == "Grid")
-                return LoadGrid(state, node, parentCell: null, isPaste);
+                return LoadGrid(document, node, parentCell: null, isPaste);
 
             ElementModel el;
 
             switch (node.Name.LocalName)
             {
                 case "Button":
-                    el = this.InitiateButtonModel(state);
+                    el = this.InitiateButtonModel(document);
                     break;
                 case "TextBlock":
-                    el = this.InitiateTextBlockModel(state);
+                    el = this.InitiateTextBlockModel(document);
                     break;
                 case "TextInput":
-                    el = this.InitiateTextInputModel(state);
+                    el = this.InitiateTextInputModel(document);
                     break;
                 case "Select":
-                    el = this.InitiateSelectModel(state);
+                    el = this.InitiateSelectModel(document);
                     break;
                 case "Switch":
-                    el = this.InitiateSwitchModel(state);
+                    el = this.InitiateSwitchModel(document);
                     break;
                 case "CheckBox":
-                    el = this.InitiateCheckBoxModel(state);
+                    el = this.InitiateCheckBoxModel(document);
                     break;
                 case "DatePicker":
-                    el = this.InitiateDatePickerModel(state);
+                    el = this.InitiateDatePickerModel(document);
                     break;
                 case "TimePicker":
-                    el = this.InitiateTimePickerModel(state);
+                    el = this.InitiateTimePickerModel(document);
                     break;
                 case "Image":
-                    el = this.InitiateImageModel(state);
+                    el = this.InitiateImageModel(document);
                     break;
                 case "DataGrid":
-                    el = this.InitiateDataGridModel(state);
+                    el = this.InitiateDataGridModel(document);
                     break;
                 default:
                     return null;
@@ -303,7 +304,7 @@ namespace DMB.Core.Dmf
 
             el.ParentCell = null;
 
-            state.Register(el, isPaste);
+            document.Register(el, isPaste);
             DmfReflect.ReadAll(node, el, isPaste);
 
             // Special handling for DataGrid toolbar
@@ -314,7 +315,7 @@ namespace DMB.Core.Dmf
 
                 if (toolbarGridNode != null)
                 {
-                    var toolbarGrid = LoadGrid(state, toolbarGridNode, parentCell: null, isPaste);
+                    var toolbarGrid = LoadGrid(document, toolbarGridNode, parentCell: null, isPaste);
                     dg.ToolBarGrid = toolbarGrid;
                     dg.HasToolbar = true;
                 }
@@ -323,13 +324,13 @@ namespace DMB.Core.Dmf
             return el;
         }
 
-        public ElementModel? LoadElement(ModuleStateCore state, XElement node, CellModelCore parentCell
+        public ElementModel? LoadElement(ModuleDocumentCore document, XElement node, CellModelCore parentCell
             , bool isPaste)
         {
             if (node.Name.LocalName == "Grid")
-                return LoadGrid(state, node, parentCell, isPaste);
+                return LoadGrid(document, node, parentCell, isPaste);
 
-            var el = LoadElement(state, node, isPaste);
+            var el = LoadElement(document, node, isPaste);
             if (el == null)
                 return null;
 
@@ -337,15 +338,15 @@ namespace DMB.Core.Dmf
             return el;
         }
 
-        private void LoadDatasets(ModuleStateCore state, XElement? datasetsNode
+        private void LoadDatasets(ModuleDocumentCore document, XElement? datasetsNode
             , bool isPaste)
         {
             if (datasetsNode == null) return;
 
             foreach (var dsNode in datasetsNode.Elements("Dataset"))
             {
-                var ds = this.InitiateDatasetModel(state);
-                state.Register(ds);
+                var ds = this.InitiateDatasetModel(document);
+                document.Register(ds);
                 DmfReflect.ReadAll(dsNode, ds, isPaste);
 
                 // Fields
@@ -380,14 +381,14 @@ namespace DMB.Core.Dmf
             }
         }
 
-        private void LoadVariables(ModuleStateCore state, XElement? varsNode, bool isPaste)
+        private void LoadVariables(ModuleDocumentCore document, XElement? varsNode, bool isPaste)
         {
             if (varsNode == null) return;
 
             foreach (var vNode in varsNode.Elements("Var"))
             {
-                var v = this.InitiateVariableModel(state);
-                state.Register(v);
+                var v = this.InitiateVariableModel(document);
+                document.Register(v);
                 DmfReflect.ReadAll(vNode, v, isPaste);
             }
         }
@@ -460,11 +461,11 @@ namespace DMB.Core.Dmf
             return new XElement(typeName);
         }
 
-        private XElement SaveDatasets(ModuleStateCore state)
+        private XElement SaveDatasets(ModuleDocumentCore document)
         {
             var root = new XElement("Datasets");
 
-            var datasets = state.AllItems.OfType<DS>().ToList();
+            var datasets = document.AllItems.OfType<DS>().ToList();
             foreach (var ds in datasets)
             {
                 var dsNode = new XElement("Dataset");
@@ -499,11 +500,11 @@ namespace DMB.Core.Dmf
             return root;
         }
 
-        private XElement SaveVariables(ModuleStateCore state)
+        private XElement SaveVariables(ModuleDocumentCore document)
         {
             var root = new XElement("Variables");
 
-            var vars = state.AllItems.OfType<VariableModelCore>().ToList();
+            var vars = document.AllItems.OfType<VariableModelCore>().ToList();
             foreach (var v in vars)
             {
                 var node = new XElement("Var");

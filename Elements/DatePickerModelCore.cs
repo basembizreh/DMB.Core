@@ -14,7 +14,7 @@ namespace DMB.Core.Elements
     {
         private DateTime? ValueDate;
 
-        public DatePickerModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public DatePickerModelCore(ModuleDocumentCore moduleDocument) : base(moduleDocument) { }
 
         public override string GetElementNamePrefix() => "DatePicker";
 

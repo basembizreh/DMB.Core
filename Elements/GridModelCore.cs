@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class GridModelCore(ModuleStateCore moduleState) :
-		ElementModel(moduleState)
+	public class GridModelCore(ModuleDocumentCore moduleDocument) :
+		ElementModel(moduleDocument)
 	{
 		[Browsable(false)]
 		[ChildElements]

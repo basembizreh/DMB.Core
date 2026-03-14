@@ -9,7 +9,7 @@ namespace DMB.Core.Elements
 {
     public class RadioButtonModelCore : ElementModel
     {
-        public RadioButtonModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public RadioButtonModelCore(ModuleDocumentCore moduleDocument) : base(moduleDocument) { }
 
         public override string GetElementNamePrefix() => "Radio";
 

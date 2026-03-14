@@ -9,7 +9,7 @@ namespace DMB.Core.Elements
 {
     public class ImageModelCore : ElementModel
     {
-        public ImageModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public ImageModelCore(ModuleDocumentCore moduleDocument) : base(moduleDocument) { }
 
         public override string GetElementNamePrefix() => "Image";
 

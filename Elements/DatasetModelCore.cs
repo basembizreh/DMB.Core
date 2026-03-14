@@ -12,13 +12,13 @@ namespace DMB.Core.Elements
 	public class DatasetModelCore<T> : IModuleItem
 		where T : DatasetFieldModelCore
     {
-		private readonly ModuleStateCore _moduleState;
+		private readonly ModuleDocumentCore _moduleDocument;
 		private string _id = "";
 		private DatasetFieldsCollection<T>? _fields;
 
-        public DatasetModelCore(ModuleStateCore moduleState)
+        public DatasetModelCore(ModuleDocumentCore moduleDocument)
 		{
-			this._moduleState = moduleState;
+			this._moduleDocument = moduleDocument;
         }
 
 
@@ -28,7 +28,7 @@ namespace DMB.Core.Elements
 			get => _id;
 			set
 			{
-				var (ok, error) = _moduleState.CanSetItemId(this, value);
+				var (ok, error) = this._moduleDocument.CanSetItemId(this, value);
 				if (!ok)
 				{
 					throw new Exception(error);
@@ -40,7 +40,7 @@ namespace DMB.Core.Elements
 
 		public string DatasetName { get => this.Id; }
 
-        protected ModuleStateCore ModuleStateCore => _moduleState;
+        protected ModuleDocumentCore ModuleDocumentCore => this._moduleDocument;
 
 		public virtual DatasetFieldsCollection<T> Fields 
 		{

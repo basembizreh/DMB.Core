@@ -11,7 +11,7 @@ namespace DMB.Core.Elements
 {
     public class TimePickerModelCore : ElementModel
     {
-        public TimePickerModelCore(ModuleStateCore moduleState) : base(moduleState) { }
+        public TimePickerModelCore(ModuleDocumentCore moduleDocument) : base(moduleDocument) { }
 
         public override string GetElementNamePrefix() => "TimePicker";
 
