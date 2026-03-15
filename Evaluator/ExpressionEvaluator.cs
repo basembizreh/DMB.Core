@@ -12,7 +12,7 @@ namespace DMB.Core.Evaluator
 		private readonly Interpreter _interpreter;
 		private readonly object _sync = new();
 
-		public ExpressionEvaluator(ModuleStateCore state)
+		public ExpressionEvaluator(ModuleDocumentCore moduleDocument)
 		{
 			_interpreter = new Interpreter();
 
@@ -21,17 +21,17 @@ namespace DMB.Core.Evaluator
             _interpreter.Reference(typeof(CultureInfo));
 
             // Globals
-            _interpreter.SetVariable("Globals", state.Globals);
+            _interpreter.SetVariable("Globals", moduleDocument.Globals);
 
 			// Vars: by name -> value
-			var vars = state.AllItems
+			var vars = moduleDocument.AllItems
 				.OfType<VariableModelCore>()
 				.ToDictionary(v => v.Name, v => v.Value, StringComparer.OrdinalIgnoreCase);
 
 			_interpreter.SetVariable("Vars", vars);
 
 			// Inputs: by element Id -> value (only IValueElement)
-			var inputs = state.AllItems
+			var inputs = moduleDocument.AllItems
 				.OfType<IValueElement>()
 				.Cast<IModuleItem>()
 				.ToDictionary(i => i.Id, i => (IValueElement)i);
@@ -44,7 +44,7 @@ namespace DMB.Core.Evaluator
 			//var datasets = state.AllItems
 			//	.OfType<DatasetModelCore<DatasetFieldModelCore>>()
 			//	.ToDictionary(d => d.Id, d => (object)d, StringComparer.OrdinalIgnoreCase);
-			var datasets = state.AllItems
+			var datasets = moduleDocument.AllItems
 				.OfType<DatasetModelCore<DatasetFieldModelCore>>()
 				.ToDictionary(d => d.Id, d => d, StringComparer.OrdinalIgnoreCase);
 

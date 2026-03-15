@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+using DMB.Core.Elements;
 
 namespace DMB.Core.Dmf
 {
@@ -16,7 +17,7 @@ namespace DMB.Core.Dmf
         {
             WriteAttributes(node, obj);
             WriteExpandable(node, obj);
-            WriteChildObjects(node, obj);          
+            WriteChildObjects(node, obj);
             WriteChildrenCollections(node, obj);
         }
 
@@ -24,11 +25,9 @@ namespace DMB.Core.Dmf
         {
             ReadAttributes(node, obj, isPaste);
             ReadExpandable(node, obj);
-            ReadChildObjects(node, obj, isPaste); 
+            ReadChildObjects(node, obj, isPaste);
             ReadChildrenCollections(node, obj, isPaste);
         }
-
-        // ===== Existing (attributes) =====
 
         public static void WriteAttributes(XElement node, object obj)
         {
@@ -75,6 +74,7 @@ namespace DMB.Core.Dmf
             }
         }
 
+        // DmfChild: Validate usage as GridModelCore-only and SKIP grid children here.
         private static void WriteChildObjects(XElement node, object model)
         {
             var props = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -86,15 +86,20 @@ namespace DMB.Core.Dmf
                               .FirstOrDefault();
                 if (chAttr is null) continue;
 
-                var value = p.GetValue(model);
-                if (value is null) continue;
+                // Enforce DmfChild is grid-only in this codebase
+                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
+                {
+                    throw new InvalidOperationException(
+                        $"DmfChildAttribute can only be applied to GridModelCore properties. " +
+                        $"Found on '{model.GetType().Name}.{p.Name}' of type '{p.PropertyType.FullName}'.");
+                }
 
-                var childNode = new XElement(chAttr.ElementName);
-                WriteAll(childNode, value);
-                node.Add(childNode);
+                // Skip serializing grid children here; DmfServiceCore handles full grid save (rows/cells/elements).
+                continue;
             }
         }
 
+        // DmfChild read: enforce grid-only and skip here so DmfServiceCore.LoadGrid will handle children
         private static void ReadChildObjects(XElement node, object model, bool isPaste)
         {
             var props = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -106,47 +111,19 @@ namespace DMB.Core.Dmf
                               .FirstOrDefault();
                 if (chAttr is null) continue;
 
-                var childNode = node.Element(chAttr.ElementName);
-                if (childNode == null) continue;
-
-                var current = p.GetValue(model);
-
-                if (current == null)
+                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
                 {
-                    if (string.IsNullOrWhiteSpace(chAttr.FactoryMethodName))
-                    {
-                        throw new InvalidOperationException(
-                            $"DmfChild property '{model.GetType().Name}.{p.Name}' is null during Load, " +
-                            $"and no factory method was provided.");
-                    }
-
-                    var factory = model.GetType().GetMethod(
-                        chAttr.FactoryMethodName,
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-                    if (factory == null)
-                    {
-                        throw new InvalidOperationException(
-                            $"Factory method '{chAttr.FactoryMethodName}' was not found on type '{model.GetType().Name}'.");
-                    }
-
-                    current = factory.Invoke(model, null);
-
-                    if (current == null)
-                    {
-                        throw new InvalidOperationException(
-                            $"Factory method '{chAttr.FactoryMethodName}' returned null for '{model.GetType().Name}.{p.Name}'.");
-                    }
-
-                    p.SetValue(model, current);
+                    throw new InvalidOperationException(
+                        $"DmfChildAttribute can only be applied to GridModelCore properties. " +
+                        $"Found on '{model.GetType().Name}.{p.Name}' of type '{p.PropertyType.FullName}'.");
                 }
 
-                ReadAll(childNode, current, isPaste);
+                // Skip: DmfServiceCore will load grid children using LoadGrid to ensure proper registration.
+                continue;
             }
         }
 
-        // ===== NEW: Expandable handling =====
-
+        // Expandable handling: same as before
         private static void WriteExpandable(XElement parent, object obj)
         {
             var t = obj.GetType();
@@ -165,9 +142,7 @@ namespace DMB.Core.Dmf
                 if (val == null) continue;
 
                 var childNode = new XElement(childName);
-
                 WriteAll(childNode, val);
-
                 parent.Add(childNode);
             }
         }
@@ -277,8 +252,7 @@ namespace DMB.Core.Dmf
             }
         }
 
-        // ===== Helpers =====
-
+        // Helpers
         private static string ToAttrName(string propName)
         {
             if (string.IsNullOrEmpty(propName)) return propName;

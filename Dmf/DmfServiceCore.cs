@@ -2,7 +2,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Reflection.Metadata;
+using System.Reflection;
 using System.Xml.Linq;
 
 namespace DMB.Core.Dmf
@@ -307,18 +307,32 @@ namespace DMB.Core.Dmf
             document.Register(el, isPaste);
             DmfReflect.ReadAll(node, el, isPaste);
 
-            // Special handling for DataGrid toolbar
-            if (el is DataGridModelCore<DC> dg)
+            // Generic DmfChild (grid) loading: iterate properties with [DmfChild],
+            // find wrapper node, load inner <Grid> using LoadGrid and set property.
+            var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var p in props)
             {
-                var toolbarWrapper = node.Element(nameof(dg.ToolBarGrid));
-                var toolbarGridNode = toolbarWrapper?.Element("Grid");
+                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+                              .OfType<DmfChildAttribute>()
+                              .FirstOrDefault();
+                if (chAttr is null) continue;
 
-                if (toolbarGridNode != null)
-                {
-                    var toolbarGrid = LoadGrid(document, toolbarGridNode, parentCell: null, isPaste);
-                    dg.ToolBarGrid = toolbarGrid;
-                    dg.HasToolbar = true;
-                }
+                // Must be a GridModelCore property per DmfReflect contract
+                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
+                    throw new InvalidOperationException(
+                        $"Property '{el.GetType().Name}.{p.Name}' is marked with [DmfChild] but is not a GridModelCore.");
+
+                var wrapper = node.Element(chAttr.ElementName);
+                if (wrapper == null) continue;
+
+                // Prefer explicit <Grid> child; else first element inside wrapper
+                var gridNode = wrapper.Element("Grid") ?? wrapper.Elements().FirstOrDefault();
+                if (gridNode == null) continue;
+
+                var childGrid = LoadGrid(document, gridNode, parentCell: null, isPaste);
+
+                if (p.SetMethod != null)
+                    p.SetValue(el, childGrid);
             }
 
             return el;
@@ -431,25 +445,34 @@ namespace DMB.Core.Dmf
             if (el is GridModelCore g)
                 return SaveGrid(g);
 
-            if (el is DataGridModelCore<DC> dg)
-            {
-                var node = NewNode(el);
-                DmfReflect.WriteAll(node, el);
+            // Write element attributes / expandable properties / children collections
+            var node = NewNode(el);
+            DmfReflect.WriteAll(node, el);
 
-                if (dg.ToolBarGrid != null)
+            // Save any Grid children that are marked with [DmfChild] as wrappers containing full <Grid>
+            var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            foreach (var p in props)
+            {
+                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+                              .OfType<DmfChildAttribute>()
+                              .FirstOrDefault();
+                if (chAttr is null) continue;
+
+                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
                 {
-                    var toolbarNode = new XElement(nameof(dg.ToolBarGrid));
-                    toolbarNode.Add(SaveGrid(dg.ToolBarGrid));
-                    node.Add(toolbarNode);
+                    throw new InvalidOperationException(
+                        $"DmfChildAttribute can only be applied to GridModelCore properties. Found on '{el.GetType().Name}.{p.Name}'.");
                 }
 
-                return node;
+                var val = p.GetValue(el) as GridModelCore;
+                if (val == null) continue;
+
+                var wrapper = new XElement(chAttr.ElementName);
+                wrapper.Add(SaveGrid(val));
+                node.Add(wrapper);
             }
 
-
-            var normalNode = NewNode(el);
-            DmfReflect.WriteAll(normalNode, el);
-            return normalNode;
+            return node;
         }
 
         private static XElement NewNode(object obj)

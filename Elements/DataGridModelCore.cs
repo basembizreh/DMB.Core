@@ -97,6 +97,8 @@ namespace DMB.Core.Elements
             throw new NotImplementedException();
         }
 
+        // Treat toolbar as a Dmf child; factory method should instantiate and register the grid
+        [DmfChild("ToolBarGrid", "InstantiateAndRegisterToobarGrid")]
         public virtual GridModelCore? ToolBarGrid 
         {
             get
