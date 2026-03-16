@@ -19,6 +19,8 @@ namespace DMB.Core.Elements
             this.CellClass = new ExpressionablePropertyCore<string?>();
             this.CellStyle = new ExpressionablePropertyCore<string?>();
             this.Format = new ExpressionablePropertyCore<string?>();
+
+            this.CellTemplate = new CellContentTemplateCore();
         }
 
         [Dmf]
@@ -82,5 +84,21 @@ namespace DMB.Core.Elements
         [Dmf]
         [ExpandableProperty]
         public virtual IExpressionablePropertyCore<string?> Format { get; set; } = default!;
+
+        [Dmf]
+        [ExpandableProperty]
+        public virtual ICellContentTemplateCore? CellTemplate { get; set; }
+
+        public virtual GridModelCore InstantiateAndRegisterCellContentGrid()
+        {
+            var grid = new GridModelCore(this.ModuleDocumentCore);
+            var row = new RowModelCore(this.ModuleDocumentCore);
+            var cell = new CellModelCore(this.ModuleDocumentCore, row);
+            row.Cells.Add(cell);
+            grid.Rows.Add(row);
+            this.ModuleDocumentCore.Register(grid);
+
+            return grid;
+        }
     }
 }

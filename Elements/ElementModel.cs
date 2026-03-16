@@ -16,7 +16,6 @@ namespace DMB.Core.Elements
 		protected ElementModel(ModuleDocumentCore moduleDocument)
 		{
 			this._moduleDocument = moduleDocument;
-			//this.Id = moduleState.GenerateNextElementId(this);
 			this.Visible = new ExpressionablePropertyCore<bool>() { Value = true };
         }
 

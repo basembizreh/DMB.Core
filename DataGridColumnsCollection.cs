@@ -28,8 +28,6 @@ namespace DMB.Core
             set { this._dataGridId = value; }
         }
 
-        public ModuleDocumentCore? ModuleState => this._moduleDocument;
-
         public event Action? Changed;
 
         public void RaiseChangedEvent()
@@ -41,18 +39,26 @@ namespace DMB.Core
 
         protected override void InsertItem(int index, T item)
         {
-            item.ModuleDocumentCore = this._moduleDocument;
-            item.DataGridId = _dataGridId;
+            this.SetupItem(item);
             base.InsertItem(index, item);
             if (!SuspendChanged) Changed?.Invoke();
         }
 
         protected override void SetItem(int index, T item)
         {
-            item.ModuleDocumentCore = this._moduleDocument;
-            item.DataGridId = _dataGridId;
+            this.SetupItem(item);
             base.SetItem(index, item);
             if (!SuspendChanged) Changed?.Invoke();
+        }
+
+        private void SetupItem(T item)
+        {
+            item.ModuleDocumentCore = this._moduleDocument;
+            item.DataGridId = _dataGridId;
+            if (item.CellTemplate is not null)
+            {
+                item.CellTemplate.Content = item.InstantiateAndRegisterCellContentGrid();
+            }
         }
 
         protected override void RemoveItem(int index)

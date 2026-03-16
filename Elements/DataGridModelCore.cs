@@ -36,9 +36,19 @@ namespace DMB.Core.Elements
             }
         }
 
-        protected virtual GridModelCore InstantiateAndRegisterToobarGrid()
+        protected virtual GridModelCore InstantiateAndRegisterToolbarGrid()
         {
-            throw new NotImplementedException();
+            var grid = new GridModelCore(this.ModuleDocumentCore);
+            grid.Id = $"{this.Id}_ToolBarGrid";
+            var row = new RowModelCore(this.ModuleDocumentCore);
+            row.Id = $"{grid.Id}_Row";
+            var cell = new CellModelCore(this.ModuleDocumentCore, row);
+            cell.Id = $"{row.Id}_Cell";
+            row.Cells.Add(cell);
+            grid.Rows.Add(row);
+            this.ModuleDocumentCore.Register(grid, false);
+
+            return grid;
         }
 
         [DmfChildren("Columns", "Column")]
@@ -54,19 +64,8 @@ namespace DMB.Core.Elements
             }
         }
 
-        public virtual void EnsureToolbarGrid()
-        {
-            if (!this.HasToolbar)
-                return;
-
-            if (this._toolbarGrid == null)
-            {
-                this._toolbarGrid = this.InstantiateAndRegisterToobarGrid();
-            }
-        }
-
         [Dmf]
-        public virtual bool HasToolbar { get; set; }
+        public virtual bool ShowToolbar { get; set; }
 
         [Dmf]
         public virtual bool Hover { get; set; } = true;
@@ -92,17 +91,17 @@ namespace DMB.Core.Elements
             this.Columns.DataGridId = newId;
         }
 
-        protected virtual GridModelCore? CreateToolbarGridForLoad()
-        {
-            throw new NotImplementedException();
-        }
 
         // Treat toolbar as a Dmf child; factory method should instantiate and register the grid
-        [DmfChild("ToolBarGrid", "InstantiateAndRegisterToobarGrid")]
+        [DmfChild("ToolBarGrid")]
         public virtual GridModelCore? ToolBarGrid 
         {
             get
             {
+                if (this._toolbarGrid is null)
+                {
+                    this._toolbarGrid = this.InstantiateAndRegisterToolbarGrid();
+                }
                 return this._toolbarGrid;
             }
             set
