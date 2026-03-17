@@ -87,7 +87,7 @@ namespace DMB.Core.Elements
 
         [Dmf]
         [ExpandableProperty]
-        public virtual ICellContentTemplateCore? CellTemplate { get; set; }
+        public virtual ICellContentTemplateCore? CellTemplate { get; set; } = default!;
 
         public virtual GridModelCore InstantiateAndRegisterCellContentGrid()
         {

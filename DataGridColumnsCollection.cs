@@ -55,7 +55,11 @@ namespace DMB.Core
         {
             item.ModuleDocumentCore = this._moduleDocument;
             item.DataGridId = _dataGridId;
-            if (item.CellTemplate is not null)
+
+            if (!this._moduleDocument.IsLoading &&
+                item.CellTemplate is not null &&
+                    item.CellTemplate.Enabled &&
+                    item.CellTemplate.Content is null)
             {
                 item.CellTemplate.Content = item.InstantiateAndRegisterCellContentGrid();
             }

@@ -42,27 +42,35 @@ namespace DMB.Core.Dmf
 
         public GridModelCore? LoadFromXml(ModuleDocumentCore document, string xml, bool isPaste)
         {
-            var doc = XDocument.Parse(xml);
+            document.IsLoading = true;
+            try
+            {
+                var doc = XDocument.Parse(xml);
 
-            var version = doc.Root?.Attribute("version")?.Value;
-            if (version != DmfConstants.CurrentVersion)
-                throw new Exception($"Unsupported DMF version: {version}");
+                var version = doc.Root?.Attribute("version")?.Value;
+                if (version != DmfConstants.CurrentVersion)
+                    throw new Exception($"Unsupported DMF version: {version}");
 
-            document.Clear();
-            document.Globals["Language"] = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                document.Clear();
+                document.Globals["Language"] = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
-            this.LoadDatasets(document, doc.Root?.Element("Datasets"), isPaste);
-            this.LoadVariables(document, doc.Root?.Element("Variables"), isPaste);
+                this.LoadDatasets(document, doc.Root?.Element("Datasets"), isPaste);
+                this.LoadVariables(document, doc.Root?.Element("Variables"), isPaste);
 
-            var gridNode = doc.Root?.Element("Grid");
-            if (gridNode == null)
-                return null;
+                var gridNode = doc.Root?.Element("Grid");
+                if (gridNode == null)
+                    return null;
 
-            var rootGrid = LoadGrid(document, gridNode, null, isPaste);
-            document.SetMainGrid(rootGrid);
-            document.RaiseStateChanged();
+                var rootGrid = LoadGrid(document, gridNode, null, isPaste);
+                document.SetMainGrid(rootGrid);
+                document.RaiseStateChanged();
 
-            return rootGrid;
+                return rootGrid;
+            }
+            finally
+            {
+                document.IsLoading = false;
+            }
         }
 
         public string SaveToXml(ModuleDocumentCore document)
@@ -307,33 +315,35 @@ namespace DMB.Core.Dmf
             document.Register(el, isPaste);
             DmfReflect.ReadAll(node, el, isPaste);
 
-            // Generic DmfChild (grid) loading: iterate properties with [DmfChild],
-            // find wrapper node, load inner <Grid> using LoadGrid and set property.
-            var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var p in props)
-            {
-                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
-                              .OfType<DmfChildAttribute>()
-                              .FirstOrDefault();
-                if (chAttr is null) continue;
+            this.LoadObjectGraph(document, el, node, isPaste);
 
-                // Must be a GridModelCore property per DmfReflect contract
-                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
-                    throw new InvalidOperationException(
-                        $"Property '{el.GetType().Name}.{p.Name}' is marked with [DmfChild] but is not a GridModelCore.");
+            //// Generic DmfChild (grid) loading: iterate properties with [DmfChild],
+            //// find wrapper node, load inner <Grid> using LoadGrid and set property.
+            //var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            //foreach (var p in props)
+            //{
+            //    var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+            //                  .OfType<DmfChildAttribute>()
+            //                  .FirstOrDefault();
+            //    if (chAttr is null) continue;
 
-                var wrapper = node.Element(chAttr.ElementName);
-                if (wrapper == null) continue;
+            //    // Must be a GridModelCore property per DmfReflect contract
+            //    if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
+            //        throw new InvalidOperationException(
+            //            $"Property '{el.GetType().Name}.{p.Name}' is marked with [DmfChild] but is not a GridModelCore.");
 
-                // Prefer explicit <Grid> child; else first element inside wrapper
-                var gridNode = wrapper.Element("Grid") ?? wrapper.Elements().FirstOrDefault();
-                if (gridNode == null) continue;
+            //    var wrapper = node.Element(chAttr.ElementName);
+            //    if (wrapper == null) continue;
 
-                var childGrid = LoadGrid(document, gridNode, parentCell: null, isPaste);
+            //    // Prefer explicit <Grid> child; else first element inside wrapper
+            //    var gridNode = wrapper.Element("Grid") ?? wrapper.Elements().FirstOrDefault();
+            //    if (gridNode == null) continue;
 
-                if (p.SetMethod != null)
-                    p.SetValue(el, childGrid);
-            }
+            //    var childGrid = LoadGrid(document, gridNode, parentCell: null, isPaste);
+
+            //    if (p.SetMethod != null)
+            //        p.SetValue(el, childGrid);
+            //}
 
             return el;
         }
@@ -449,28 +459,30 @@ namespace DMB.Core.Dmf
             var node = NewNode(el);
             DmfReflect.WriteAll(node, el);
 
-            // Save any Grid children that are marked with [DmfChild] as wrappers containing full <Grid>
-            var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var p in props)
-            {
-                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
-                              .OfType<DmfChildAttribute>()
-                              .FirstOrDefault();
-                if (chAttr is null) continue;
+            this.SaveObjectGraph(el, node);
 
-                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
-                {
-                    throw new InvalidOperationException(
-                        $"DmfChildAttribute can only be applied to GridModelCore properties. Found on '{el.GetType().Name}.{p.Name}'.");
-                }
+            //// Save any Grid children that are marked with [DmfChild] as wrappers containing full <Grid>
+            //var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            //foreach (var p in props)
+            //{
+            //    var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+            //                  .OfType<DmfChildAttribute>()
+            //                  .FirstOrDefault();
+            //    if (chAttr is null) continue;
 
-                var val = p.GetValue(el) as GridModelCore;
-                if (val == null) continue;
+            //    if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
+            //    {
+            //        throw new InvalidOperationException(
+            //            $"DmfChildAttribute can only be applied to GridModelCore properties. Found on '{el.GetType().Name}.{p.Name}'.");
+            //    }
 
-                var wrapper = new XElement(chAttr.ElementName);
-                wrapper.Add(SaveGrid(val));
-                node.Add(wrapper);
-            }
+            //    var val = p.GetValue(el) as GridModelCore;
+            //    if (val == null) continue;
+
+            //    var wrapper = new XElement(chAttr.ElementName);
+            //    wrapper.Add(SaveGrid(val));
+            //    node.Add(wrapper);
+            //}
 
             return node;
         }
@@ -645,6 +657,192 @@ namespace DMB.Core.Dmf
 
             vProp.SetValue(propObj, converted);
         }
+
+        private void SaveObjectGraph(object owner, XElement ownerNode)
+        {
+            var props = owner.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var p in props)
+            {
+                if (!p.CanRead)
+                    continue;
+
+                var value = p.GetValue(owner);
+                if (value == null)
+                    continue;
+
+                // 1) DmfChild
+                var childAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+                                 .OfType<DmfChildAttribute>()
+                                 .FirstOrDefault();
+
+                if (childAttr != null)
+                {
+                    if (value is not GridModelCore grid)
+                        throw new InvalidOperationException(
+                            $"Property '{owner.GetType().Name}.{p.Name}' has [DmfChild] but is not GridModelCore.");
+
+                    var wrapper = new XElement(childAttr.ElementName);
+                    wrapper.Add(this.SaveGrid(grid));
+                    ownerNode.Add(wrapper);
+                    continue;
+                }
+
+                // 2) DmfChildren
+                var childrenAttr = p.GetCustomAttributes(typeof(DmfChildrenAttribute), true)
+                                    .OfType<DmfChildrenAttribute>()
+                                    .FirstOrDefault();
+
+                if (childrenAttr != null)
+                {
+                    if (value is not System.Collections.IEnumerable items)
+                        throw new InvalidOperationException(
+                            $"Property '{owner.GetType().Name}.{p.Name}' has [DmfChildren] but is not IEnumerable.");
+
+                    var collectionNode = new XElement(childrenAttr.ContainerName);
+
+                    foreach (var item in items)
+                    {
+                        if (item == null)
+                            continue;
+
+                        var itemNode = new XElement(childrenAttr.ItemName);
+
+                        DmfReflect.WriteAll(itemNode, item);
+                        this.SaveObjectGraph(item, itemNode);
+
+                        collectionNode.Add(itemNode);
+                    }
+
+                    ownerNode.Add(collectionNode);
+                    continue;
+                }
+
+                // 3) ExpandableProperty only
+                var isExpandable = p.GetCustomAttribute<ExpandablePropertyAttribute>() != null;
+                var isDmf = p.GetCustomAttribute<DmfAttribute>() != null;
+
+                if (isExpandable && isDmf)
+                {
+                    var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                    var childNode = ownerNode.Element(childName);
+                    if (childNode == null)
+                    {
+                        childNode = new XElement(childName);
+                        ownerNode.Add(childNode);
+                    }
+
+                    // attributes of the expandable object
+                    DmfReflect.WriteAll(childNode, value);
+
+                    // recurse only through Dmf* inside it
+                    this.SaveObjectGraph(value, childNode);
+                }
+            }
+        }
+
+        private void LoadObjectGraph(ModuleDocumentCore document, object owner, XElement ownerNode, bool isPaste)
+        {
+            var props = owner.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var p in props)
+            {
+                if (!p.CanRead)
+                    continue;
+
+                // 1) DmfChild
+                var childAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
+                                 .OfType<DmfChildAttribute>()
+                                 .FirstOrDefault();
+
+                if (childAttr != null)
+                {
+                    var wrapper = ownerNode.Element(childAttr.ElementName);
+                    if (wrapper == null)
+                        continue;
+
+                    var gridNode = wrapper.Element("Grid") ?? wrapper.Elements().FirstOrDefault();
+                    if (gridNode == null)
+                        continue;
+
+                    var childGrid = this.LoadGrid(document, gridNode, parentCell: null, isPaste);
+
+                    if (p.SetMethod != null)
+                        p.SetValue(owner, childGrid);
+
+                    continue;
+                }
+
+                // 2) DmfChildren
+                var childrenAttr = p.GetCustomAttributes(typeof(DmfChildrenAttribute), true)
+                                    .OfType<DmfChildrenAttribute>()
+                                    .FirstOrDefault();
+
+                if (childrenAttr != null)
+                {
+                    var container = ownerNode.Element(childrenAttr.ContainerName);
+                    if (container == null)
+                        continue;
+
+                    var collectionObj = p.GetValue(owner);
+                    if (collectionObj == null)
+                        continue;
+
+                    collectionObj.GetType().GetMethod("Clear")?.Invoke(collectionObj, null);
+
+                    var addMethod = collectionObj.GetType().GetMethod("Add");
+                    if (addMethod == null)
+                        throw new InvalidOperationException(
+                            $"Property '{owner.GetType().Name}.{p.Name}' has [DmfChildren] but no Add(T) method was found.");
+
+                    var itemType = addMethod.GetParameters().First().ParameterType;
+
+                    foreach (var itemNode in container.Elements(childrenAttr.ItemName))
+                    {
+                        var item = Activator.CreateInstance(itemType)
+                                   ?? throw new InvalidOperationException($"Cannot create instance of '{itemType.Name}'.");
+
+                        DmfReflect.ReadAll(itemNode, item, isPaste);
+                        this.LoadObjectGraph(document, item, itemNode, isPaste);
+
+                        addMethod.Invoke(collectionObj, new[] { item });
+                    }
+
+                    continue;
+                }
+
+                // 3) ExpandableProperty only
+                var isExpandable = p.GetCustomAttribute<ExpandablePropertyAttribute>() != null;
+                var isDmf = p.GetCustomAttribute<DmfAttribute>() != null;
+
+                if (isExpandable && isDmf)
+                {
+                    var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                    var childNode = ownerNode.Element(childName);
+                    if (childNode == null)
+                        continue;
+
+                    var current = p.GetValue(owner);
+                    if (current == null)
+                        continue;
+
+                    DmfReflect.ReadAll(childNode, current, isPaste);
+                    this.LoadObjectGraph(document, current, childNode, isPaste);
+                }
+            }
+        }
+
+        //private bool IsSimpleType(Type type)
+        //{
+        //    type = Nullable.GetUnderlyingType(type) ?? type;
+
+        //    return type.IsPrimitive
+        //        || type.IsEnum
+        //        || type == typeof(string)
+        //        || type == typeof(decimal)
+        //        || type == typeof(DateTime)
+        //        || type == typeof(Guid);
+        //}
     }
 
     public interface IXmlNodeSerializable

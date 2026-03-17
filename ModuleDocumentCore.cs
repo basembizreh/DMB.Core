@@ -16,6 +16,8 @@ namespace DMB.Core
         public event Action<IModuleItem, string, string>? ItemIdChanged;
         public event Action? StateChanged;
 
+        public bool IsLoading { get; set; }
+
         public IDictionary<string, string?> Globals { get; }
             = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
