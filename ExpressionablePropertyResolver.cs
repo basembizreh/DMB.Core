@@ -19,7 +19,7 @@ namespace DMB.Core
 			}
 			else
 			{
-				if (property.Expression != null)
+				if (!string.IsNullOrWhiteSpace(property.Expression))
 				{
 					var val = evaluator.Evaluate(property.Expression)?.ToString();
 					var t = typeof(T);

@@ -87,9 +87,11 @@ namespace DMB.Core.Elements
         public virtual ExpressionablePropertyCore<string?> CellStyle { get; set; } = default!;
 
         [Dmf]
+        [DefaultValue(true)]
         public virtual bool EnableFitering { get; set; } = true;
 
         [Dmf]
+        [DefaultValue(true)]
         public virtual bool EnableSorting { get; set; } = true;
 
         [Dmf]
@@ -102,7 +104,7 @@ namespace DMB.Core.Elements
 
         [Dmf]
         [ExpandableProperty]
-        public virtual ICellContentTemplateCore? CellTemplate { get; set; } = default!;
+        public virtual CellContentTemplateCore? CellTemplate { get; set; } = default!;
 
         public virtual GridModelCore InstantiateAndRegisterCellContentGrid()
         {
