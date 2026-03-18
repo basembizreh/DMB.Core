@@ -38,11 +38,11 @@ namespace DMB.Core.Elements
         [Dmf]
         [DefaultValue(ContentAlignment.Start)]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<ContentAlignment> HorizontalAlignment { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<ContentAlignment> HorizontalAlignment { get; set; } = default!;
 
         [Dmf]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<ContentAlignment> VerticalAlignment { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<ContentAlignment> VerticalAlignment { get; set; } = default!;
 
         [Browsable(false)]
         public RowModelCore Row { get => this._parentRow; }
@@ -50,6 +50,6 @@ namespace DMB.Core.Elements
         public override string GetElementNamePrefix() => "Cell";
 
         [Browsable(false)]
-        public override IExpressionablePropertyCore<bool> Visible { get => base.Visible; }
+        public override ExpressionablePropertyCore<bool> Visible { get => base.Visible; }
     }
 }

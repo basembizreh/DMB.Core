@@ -64,7 +64,7 @@ namespace DMB.Core.Elements
 
 		[Dmf]
 		[ExpandableProperty]
-		public virtual IExpressionablePropertyCore<bool> Visible { get; set; } = default!;
+		public virtual ExpressionablePropertyCore<bool> Visible { get; set; } = default!;
     }
 
 	public enum ContentAlignment

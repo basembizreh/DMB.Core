@@ -30,10 +30,10 @@ namespace DMB.Core.Elements
 
         [Dmf]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<MudBlazor.Align> TextAlign { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<MudBlazor.Align> TextAlign { get; set; } = default!;
 
         [Dmf]
 		[ExpandableProperty]
-		public virtual IExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
+		public virtual ExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
     }
 }

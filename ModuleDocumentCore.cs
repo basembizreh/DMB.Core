@@ -87,7 +87,9 @@ namespace DMB.Core
                     }
                 }
 
-                var props = item.GetType().GetProperties().Where(p => p.GetCustomAttributes<ChildElementsAttribute>().Any());
+                //var props = item.GetType().GetProperties().Where(p => p.GetCustomAttributes<ChildElementsAttribute>().Any());
+                var props = item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(p => p.GetCustomAttributes<ChildElementsAttribute>().Any());
                 if (props.Any())
                 {
                     foreach (var prop in props)
@@ -103,6 +105,9 @@ namespace DMB.Core
                         }
                     }
                 }
+
+                //this.AttachOwners(item);
+
                 this.AllItems.Add(item);
             }
         }
@@ -186,5 +191,24 @@ namespace DMB.Core
         {
             return this._mainGrid;
         }
+
+        //public void AttachOwners(object owner)
+        //{
+        //    if (owner == null) return;
+
+        //    var props = owner.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        //    foreach (var prop in props)
+        //    {
+        //        if (!prop.CanRead) continue;
+
+        //        var value = prop.GetValue(owner);
+
+        //        if (value is IHasOwner slave)
+        //        {
+        //            slave.Owner = owner;
+        //        }
+        //    }
+        //}
     }
 }

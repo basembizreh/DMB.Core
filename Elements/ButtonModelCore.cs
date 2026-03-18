@@ -27,7 +27,7 @@ namespace DMB.Core.Elements
 
 		[Dmf]
 		[ExpandableProperty]
-		public virtual IExpressionablePropertyCore<Color> Color { get; set; } = default!;
+		public virtual ExpressionablePropertyCore<Color> Color { get; set; } = default!;
 
 		[Dmf]
 		public virtual MudBlazor.Variant Variant { get; set; } = MudBlazor.Variant.Filled;

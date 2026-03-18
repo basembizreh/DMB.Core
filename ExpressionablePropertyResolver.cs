@@ -11,7 +11,7 @@ namespace DMB.Core
 	public static class ExpressionablePropertyResolver<T>
 		//where T :  struct, Enum
 	{
-		public static T Resolve(IExpressionablePropertyCore<T> property, ExpressionEvaluator evaluator)
+		public static T Resolve(ExpressionablePropertyCore<T> property, ExpressionEvaluator evaluator)
 		{
 			if (property.ValueMode == ValueMode.Literal)
 			{

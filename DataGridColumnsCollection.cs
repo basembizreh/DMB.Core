@@ -35,7 +35,7 @@ namespace DMB.Core
             this.Changed?.Invoke();
         }
 
-        public bool SuspendChanged { get; set; } 
+        public bool SuspendChanged { get; set; }
 
         protected override void InsertItem(int index, T item)
         {
@@ -54,8 +54,6 @@ namespace DMB.Core
         private void SetupItem(T item)
         {
             item.ModuleDocumentCore = this._moduleDocument;
-            item.DataGridId = _dataGridId;
-
             if (!this._moduleDocument.IsLoading &&
                 item.CellTemplate is not null &&
                     item.CellTemplate.Enabled &&
@@ -63,6 +61,7 @@ namespace DMB.Core
             {
                 item.CellTemplate.Content = item.InstantiateAndRegisterCellContentGrid();
             }
+            item.DataGridId = _dataGridId;
         }
 
         protected override void RemoveItem(int index)

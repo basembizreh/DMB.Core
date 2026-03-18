@@ -10,6 +10,10 @@ namespace DMB.Core.Elements
 {
     public class DataGridColumnModelCore : IDatasetBound
     {
+        private string? dataGridId;
+
+        public Action? DataGridIdChanged;
+
         public DataGridColumnModelCore()
         {
             this.Visible = new ExpressionablePropertyCore<bool>() { Value = true };
@@ -30,7 +34,18 @@ namespace DMB.Core.Elements
         public ModuleDocumentCore ModuleDocumentCore { get; set; } = default!;
 
         [Browsable(false)]
-        public virtual string? DataGridId { get; set; }
+        public virtual string? DataGridId 
+        {
+            get { return this.dataGridId; }
+            set
+            {
+                if (this.dataGridId != value)
+                {
+                    this.dataGridId = value;
+                    this.RaiseDataGridIdChanged();
+                }
+            } 
+        }
 
         [Browsable(false)]
         public string? Dataset
@@ -53,23 +68,23 @@ namespace DMB.Core.Elements
 
         [Dmf]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<string?> HeaderText { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<string?> HeaderText { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string?> HeaderClass { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<string?> HeaderClass { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string?> HeaderStyle { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<string?> HeaderStyle { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string?> CellClass { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<string?> CellClass { get; set; } = default!;
 
         [ExpandableProperty]
         [Dmf]
-        public virtual IExpressionablePropertyCore<string?> CellStyle { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<string?> CellStyle { get; set; } = default!;
 
         [Dmf]
         public virtual bool EnableFitering { get; set; } = true;
@@ -79,11 +94,11 @@ namespace DMB.Core.Elements
 
         [Dmf]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<bool> Visible { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<bool> Visible { get; set; } = default!;
 
         [Dmf]
         [ExpandableProperty]
-        public virtual IExpressionablePropertyCore<string?> Format { get; set; } = default!;
+        public virtual ExpressionablePropertyCore<string?> Format { get; set; } = default!;
 
         [Dmf]
         [ExpandableProperty]
@@ -99,6 +114,21 @@ namespace DMB.Core.Elements
             this.ModuleDocumentCore.Register(grid);
 
             return grid;
+        }
+
+        protected virtual void RaiseDataGridIdChanged()
+        {
+            if (!string.IsNullOrWhiteSpace(this.dataGridId) && this.ModuleDocumentCore != null)
+            {
+                if (this.ModuleDocumentCore.TryGetItemById(this.dataGridId, out var item))
+                {
+                    if (this.CellTemplate != null && this.CellTemplate.Content != null)
+                    {
+                        this.CellTemplate.Content.Owner = item;
+                    }
+                }
+            }
+            this.DataGridIdChanged?.Invoke();
         }
     }
 }

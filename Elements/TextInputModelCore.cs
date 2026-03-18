@@ -28,11 +28,11 @@ namespace DMB.Core.Elements
 
 		[Dmf]
 		[ExpandableProperty]
-		public virtual IExpressionablePropertyCore<Align> TextAlign { get; set; } = default!;
+		public virtual ExpressionablePropertyCore<Align> TextAlign { get; set; } = default!;
 
 		[Dmf]
 		[ExpandableProperty]
-		public virtual IExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
+		public virtual ExpressionablePropertyCore<MudBlazor.Color> Color { get; set; } = default!;
 
 		[Dmf]
 		public virtual MudBlazor.Variant Variant { get; set; } = MudBlazor.Variant.Outlined;

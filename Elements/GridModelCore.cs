@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 namespace DMB.Core.Elements
 {
 	public class GridModelCore(ModuleDocumentCore moduleDocument) :
-		ElementModel(moduleDocument)
-	{
+		ElementModel(moduleDocument), IHasOwner
+    {
 		[Browsable(false)]
 		[ChildElements]
         public List<RowModelCore> Rows { get; set; } = new();
@@ -20,5 +20,8 @@ namespace DMB.Core.Elements
 		public override string GetElementNamePrefix() => "Grid";
 
         public ElementModel? Parent { get; set; }
+
+        [Browsable(false)]
+        public object? Owner { get; set; }
     }
 }

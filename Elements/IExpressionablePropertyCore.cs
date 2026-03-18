@@ -6,13 +6,15 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public interface IExpressionablePropertyCore<T>
+    public interface IExpressionablePropertyCore
     {
-        ValueMode ValueMode { get; set; }
+        object? Owner { get; set; }
 
-        string? Expression { get; set; }
+        //ValueMode ValueMode { get; set; }
 
-        T Value { get; set; }
+        //string? Expression { get; set; }
+
+        //T Value { get; set; }
     }
 
     public enum ValueMode

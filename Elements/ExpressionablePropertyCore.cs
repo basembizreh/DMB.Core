@@ -8,15 +8,18 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-    public class ExpressionablePropertyCore<T> : IExpressionablePropertyCore<T>
+    public class ExpressionablePropertyCore<T> : IExpressionablePropertyCore, IHasOwner
     {
         [Dmf]
-        public ValueMode ValueMode { get; set; } = ValueMode.Literal;
+        public virtual ValueMode ValueMode { get; set; } = ValueMode.Literal;
 
         [Dmf]
-        public string? Expression { get; set; }
+        public virtual string? Expression { get; set; }
 
         [Dmf]
-        public T Value { get; set; } = default!;
+        public virtual T Value { get; set; } = default!;
+
+        [Browsable(false)]
+        public object? Owner { get; set; }
     }
 }
