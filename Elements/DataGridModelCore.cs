@@ -101,17 +101,12 @@ namespace DMB.Core.Elements
                 if (!this.ModuleDocumentCore.IsLoading && this._toolbarGrid is null)
                 {
                     this._toolbarGrid = this.InstantiateAndRegisterToolbarGrid();
-                    this._toolbarGrid.Owner = this;
                 }
                 return this._toolbarGrid;
             }
             set
             {
                 this._toolbarGrid = value;
-                if (this._toolbarGrid != null && this._toolbarGrid.Owner is null)
-                {
-                    this._toolbarGrid.Owner = this;
-                }
             }
         }
     }
