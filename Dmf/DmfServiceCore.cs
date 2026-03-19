@@ -386,10 +386,10 @@ namespace DMB.Core.Dmf
                 }
 
                 // Rows
-                var rowsNode = dsNode.Element("Rows");
+                var rowsNode = dsNode.Element("DataRows");
                 if (rowsNode != null)
                 {
-                    foreach (var rNode in rowsNode.Elements("Row"))
+                    foreach (var rNode in rowsNode.Elements("DataRow"))
                     {
                         var row = this.InitiateDatasetRowModel();
                         foreach (var c in rNode.Elements("C"))
@@ -399,7 +399,7 @@ namespace DMB.Core.Dmf
                             if (!string.IsNullOrWhiteSpace(name))
                                 row.Values[name] = val;
                         }
-                        ds.Rows.Add(row);
+                        ds.DataRows.Add(row);
                     }
                 }
             }
@@ -517,10 +517,10 @@ namespace DMB.Core.Dmf
                 dsNode.Add(fieldsNode);
 
                 // Rows
-                var rowsNode = new XElement("Rows");
-                foreach (var row in ds.Rows)
+                var rowsNode = new XElement("DataRows");
+                foreach (var row in ds.DataRows)
                 {
-                    var rNode = new XElement("Row");
+                    var rNode = new XElement("DataRow");
                     foreach (var kv in row.Values)
                         rNode.Add(new XElement("C",
                             new XAttribute("n", kv.Key),

@@ -54,7 +54,7 @@ namespace DMB.Core.Elements
 			}
         }
 
-		public virtual List<DatasetRowModelCore> Rows { get; set; } = new();
+		public virtual List<DatasetRowModelCore> DataRows { get; set; } = new();
 
 		public string GetElementNamePrefix() => "Dataset";
 	}

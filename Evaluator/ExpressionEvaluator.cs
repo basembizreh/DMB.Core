@@ -90,7 +90,7 @@ namespace DMB.Core.Evaluator
 			var ctx = new Dictionary<string, object?>
 			{
 				// Keep the name exactly as your editor generates: Row
-				["Row"] = rowValues
+				["DataRow"] = rowValues
 			};
 
 			var val = Evaluate(expression, ctx);

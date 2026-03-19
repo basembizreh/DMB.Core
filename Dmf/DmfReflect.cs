@@ -74,54 +74,6 @@ namespace DMB.Core.Dmf
             }
         }
 
-        // DmfChild: Validate usage as GridModelCore-only and SKIP grid children here.
-        private static void WriteChildObjects(XElement node, object model)
-        {
-            var props = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-            foreach (var p in props)
-            {
-                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
-                              .OfType<DmfChildAttribute>()
-                              .FirstOrDefault();
-                if (chAttr is null) continue;
-
-                // Enforce DmfChild is grid-only in this codebase
-                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
-                {
-                    throw new InvalidOperationException(
-                        $"DmfChildAttribute can only be applied to GridModelCore properties. " +
-                        $"Found on '{model.GetType().Name}.{p.Name}' of type '{p.PropertyType.FullName}'.");
-                }
-
-                // Skip serializing grid children here; DmfServiceCore handles full grid save (rows/cells/elements).
-                continue;
-            }
-        }
-
-        // DmfChild read: enforce grid-only and skip here so DmfServiceCore.LoadGrid will handle children
-        private static void ReadChildObjects(XElement node, object model, bool isPaste)
-        {
-            var props = model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-            foreach (var p in props)
-            {
-                var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
-                              .OfType<DmfChildAttribute>()
-                              .FirstOrDefault();
-                if (chAttr is null) continue;
-
-                if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
-                {
-                    throw new InvalidOperationException(
-                        $"DmfChildAttribute can only be applied to GridModelCore properties. " +
-                        $"Found on '{model.GetType().Name}.{p.Name}' of type '{p.PropertyType.FullName}'.");
-                }
-
-                // Skip: DmfServiceCore will load grid children using LoadGrid to ensure proper registration.
-                continue;
-            }
-        }
 
         // Expandable handling: same as before
         private static void WriteExpandable(XElement parent, object obj)
@@ -173,82 +125,6 @@ namespace DMB.Core.Dmf
                 }
 
                 ReadAll(childNode, current, false);
-            }
-        }
-
-        private static void ReadChildrenCollections(XElement node, object model, bool isPaste)
-        {
-            var t = model.GetType();
-            var props = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-            foreach (var p in props)
-            {
-                var chAttr = p.GetCustomAttributes(typeof(DmfChildrenAttribute), true)
-                              .OfType<DmfChildrenAttribute>()
-                              .FirstOrDefault();
-                if (chAttr is null) continue;
-
-                var container = node.Element(chAttr.ContainerName);
-                if (container == null) continue;
-
-                var collectionObj = p.GetValue(model);
-                if (collectionObj is null)
-                {
-                    throw new InvalidOperationException($"DmfChildren collection '{t.Name}.{p.Name}' is null during Load. " +
-                        $"It must be initialized in the constructor or property getter.");
-                }
-
-                // Must support Clear() to avoid duplicates
-                collectionObj.GetType().GetMethod("Clear")?.Invoke(collectionObj, null);
-
-                // Must support Add(T)
-                var addMethod = collectionObj.GetType().GetMethod("Add");
-                if (addMethod == null)
-                    throw new InvalidOperationException(
-                        $"DmfChildren collection '{t.Name}.{p.Name}' does not expose a public Add(T) method.");
-
-                var itemType = addMethod.GetParameters().First().ParameterType;
-
-                foreach (var itemNode in container.Elements(chAttr.ItemName))
-                {
-                    var item = Activator.CreateInstance(itemType);
-                    if (item == null) continue;
-
-                    ReadAll(itemNode, item, isPaste);
-                    addMethod.Invoke(collectionObj, new[] { item });
-                }
-            }
-        }
-
-        private static void WriteChildrenCollections(XElement node, object model)
-        {
-            var props = model.GetType().GetProperties();
-
-            foreach (var p in props)
-            {
-                var chAttr = p.GetCustomAttributes(typeof(DmfChildrenAttribute), true)
-                              .OfType<DmfChildrenAttribute>()
-                              .FirstOrDefault();
-                if (chAttr is null) continue;
-
-                var value = p.GetValue(model);
-                if (value is null) continue;
-                if (value is not System.Collections.IEnumerable items) continue;
-
-                var container = new XElement(chAttr.ContainerName);
-
-                foreach (var item in items)
-                {
-                    if (item is null) continue;
-
-                    var itemNode = new XElement(chAttr.ItemName);
-
-                    // Write item attributes & expandable props
-                    WriteAll(itemNode, item); // recursion
-                    container.Add(itemNode);
-                }
-
-                node.Add(container);
             }
         }
 
