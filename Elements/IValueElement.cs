@@ -8,6 +8,6 @@ namespace DMB.Core.Elements
 {
     public interface IValueElement
     {
-        string? Value { get; set; }
+        object? Value { get; set; }
     }
 }

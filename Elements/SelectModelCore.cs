@@ -13,7 +13,8 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public class SelectModelCore(ModuleDocumentCore moduleDocument) : ElementModel(moduleDocument), IDatasetBound
+	public class SelectModelCore(ModuleDocumentCore moduleDocument) : ElementModel(moduleDocument)
+		, IDatasetBound, IInputField
     {
         public override string GetElementNamePrefix() => "Select";
 		private string? _dataset;
@@ -69,5 +70,14 @@ namespace DMB.Core.Elements
         [Dmf]
         [ExpandableProperty]
         public virtual ActionBinding OnValueChangedAction { get; set; } = new();
+
+		[Browsable(false)]
+		public virtual object? Value { get; set; }
+
+        [Dmf]
+        public virtual string? DefaultValue { get; set; }
+
+		[Dmf]
+		public virtual bool EnableClear { get; set; } = false;
     }
 }

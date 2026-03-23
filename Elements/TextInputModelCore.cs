@@ -40,12 +40,15 @@ namespace DMB.Core.Elements
 		[Dmf]
 		public virtual MudBlazor.Margin Margin { get; set; } = MudBlazor.Margin.Normal;
 
-        [Dmf]
-        public virtual string? Value 
+		[Browsable(false)]
+        public virtual object? Value 
 		{
 			get => this.ValueText;
             set => this.ValueText = (string?)value; 
 		}
+
+		[Dmf]
+		public virtual string? DefaultValue { get; set; }
 
 		[Browsable(false)]
         public Type ValueType => typeof(string);

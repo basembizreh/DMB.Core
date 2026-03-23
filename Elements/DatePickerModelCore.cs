@@ -37,12 +37,11 @@ namespace DMB.Core.Elements
         public bool Disabled { get; set; } = false;
 
         [Dmf]
-        public virtual string? Value
+        public virtual object? Value
         {
             get => ValueDate?.ToString(this.DateFormat);
-            set => ValueDate = value == null ? null : DateTime.ParseExact(value, this.DateFormat, System.Globalization.CultureInfo.InvariantCulture);
+            set => ValueDate = value == null ? null : DateTime.ParseExact(value.ToString()!
+                , this.DateFormat, System.Globalization.CultureInfo.InvariantCulture);
         }
-
-        //public Type ValueType => typeof(DateTime?);
     }
 }

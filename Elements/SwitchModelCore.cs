@@ -26,6 +26,6 @@ namespace DMB.Core.Elements
         [Dmf]
         public virtual bool Disabled { get; set; } = false;
 
-        public virtual string? Value { get => this.Checked.ToString(); set => this.Checked = Convert.ToBoolean(value); }
+        public virtual object? Value { get => this.Checked.ToString(); set => this.Checked = Convert.ToBoolean(value); }
     }
 }

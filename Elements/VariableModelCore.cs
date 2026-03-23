@@ -29,7 +29,7 @@ namespace DMB.Core.Elements
 		}
 
 		[Dmf]
-		public virtual string? Value { get; set; } = "";
+		public virtual object? Value { get; set; } = "";
 
 		public virtual string Id
 		{
