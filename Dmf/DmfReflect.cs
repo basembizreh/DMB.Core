@@ -17,16 +17,12 @@ namespace DMB.Core.Dmf
         {
             WriteAttributes(node, obj);
             WriteExpandable(node, obj);
-            //WriteChildObjects(node, obj);
-            //WriteChildrenCollections(node, obj);
         }
 
         public static void ReadAll(XElement node, object obj, bool isPaste)
         {
             ReadAttributes(node, obj, isPaste);
             ReadExpandable(node, obj);
-            //ReadChildObjects(node, obj, isPaste);
-            //ReadChildrenCollections(node, obj, isPaste);
         }
 
         public static void WriteAttributes(XElement node, object obj)

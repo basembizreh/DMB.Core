@@ -1,6 +1,7 @@
 ﻿using DMB.Core.Dmf;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,8 @@ namespace DMB.Core.Elements
 			this._moduleDocument = moduleDocument;
 		}
 
-		public ModuleDocumentCore ModuleState => this._moduleDocument;
+		[Browsable(false)]
+		public ModuleDocumentCore ModuleDocument => this._moduleDocument;
 
         [Dmf]
 		public string Name
@@ -45,5 +47,21 @@ namespace DMB.Core.Elements
 		}
 
 		public string GetElementNamePrefix() => "Variable";
+
+        [Dmf]
+		[DefaultValue(VariableDataType.String)]
+        public virtual VariableDataType DataType { get; set; } = VariableDataType.String;
 	}
+
+    public enum VariableDataType
+    {
+        String,
+        Integer,
+        Float,
+        DateOnly,
+        DateTime,
+        TimeOnly,
+        Boolean,
+        Object
+    }
 }

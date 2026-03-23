@@ -21,10 +21,11 @@ namespace DMB.Core.Elements
         public string? Dataset { get; set; }
 
         [Dmf]
-        public virtual DataType DataType { get; set; } = DataType.String;
+        [DefaultValue(FieldDataType.String)]
+        public virtual FieldDataType DataType { get; set; } = FieldDataType.String;
     }
 
-    public enum DataType
+    public enum FieldDataType
     {
         String,
         Integer,

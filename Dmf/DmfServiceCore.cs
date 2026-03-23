@@ -407,9 +407,10 @@ namespace DMB.Core.Dmf
 
         private void LoadVariables(ModuleDocumentCore document, XElement? varsNode, bool isPaste)
         {
-            if (varsNode == null) return;
+            if (varsNode == null)
+                return;
 
-            foreach (var vNode in varsNode.Elements("Var"))
+            foreach (var vNode in varsNode.Elements("Variable"))
             {
                 var v = this.InitiateVariableModel(document);
                 document.Register(v);
@@ -460,29 +461,6 @@ namespace DMB.Core.Dmf
             DmfReflect.WriteAll(node, el);
 
             this.SaveObjectGraph(el, node);
-
-            //// Save any Grid children that are marked with [DmfChild] as wrappers containing full <Grid>
-            //var props = el.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            //foreach (var p in props)
-            //{
-            //    var chAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
-            //                  .OfType<DmfChildAttribute>()
-            //                  .FirstOrDefault();
-            //    if (chAttr is null) continue;
-
-            //    if (!typeof(GridModelCore).IsAssignableFrom(p.PropertyType))
-            //    {
-            //        throw new InvalidOperationException(
-            //            $"DmfChildAttribute can only be applied to GridModelCore properties. Found on '{el.GetType().Name}.{p.Name}'.");
-            //    }
-
-            //    var val = p.GetValue(el) as GridModelCore;
-            //    if (val == null) continue;
-
-            //    var wrapper = new XElement(chAttr.ElementName);
-            //    wrapper.Add(SaveGrid(val));
-            //    node.Add(wrapper);
-            //}
 
             return node;
         }
@@ -542,7 +520,7 @@ namespace DMB.Core.Dmf
             var vars = document.AllItems.OfType<VariableModelCore>().ToList();
             foreach (var v in vars)
             {
-                var node = new XElement("Var");
+                var node = new XElement("Variable");
                 DmfReflect.WriteAll(node, v);
                 root.Add(node);
             }
@@ -831,18 +809,6 @@ namespace DMB.Core.Dmf
                 }
             }
         }
-
-        //private bool IsSimpleType(Type type)
-        //{
-        //    type = Nullable.GetUnderlyingType(type) ?? type;
-
-        //    return type.IsPrimitive
-        //        || type.IsEnum
-        //        || type == typeof(string)
-        //        || type == typeof(decimal)
-        //        || type == typeof(DateTime)
-        //        || type == typeof(Guid);
-        //}
     }
 
     public interface IXmlNodeSerializable

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DMB.Core.Elements
 {
-	public abstract class ElementModel : IModuleItem
+	public abstract class ElementModel : IModuleItem, IHasModuleDocument
 	{
 		private ModuleDocumentCore _moduleDocument;
 		private string _id = "";

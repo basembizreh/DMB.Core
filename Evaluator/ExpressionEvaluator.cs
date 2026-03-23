@@ -28,7 +28,7 @@ namespace DMB.Core.Evaluator
 				.OfType<VariableModelCore>()
 				.ToDictionary(v => v.Name, v => v.Value, StringComparer.OrdinalIgnoreCase);
 
-			_interpreter.SetVariable("Vars", vars);
+			_interpreter.SetVariable("Variables", vars);
 
 			// Inputs: by element Id -> value (only IValueElement)
 			var inputs = moduleDocument.AllItems

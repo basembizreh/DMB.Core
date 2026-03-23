@@ -1,4 +1,5 @@
 ﻿using DMB.Core;
+using DMB.Core.Actions;
 using DMB.Core.Dmf;
 using DMB.Core.Elements;
 using MudBlazor;
@@ -63,6 +64,10 @@ namespace DMB.Core.Elements
 		public virtual string? TextField { get; set; }
 
 		[Dmf]
-		public bool EnableFilter { get; set; }
+		public virtual bool EnableFilter { get; set; }
+
+        [Dmf]
+        [ExpandableProperty]
+        public virtual ActionBinding OnValueChangedAction { get; set; } = new();
     }
 }
