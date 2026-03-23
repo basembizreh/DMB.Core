@@ -10,7 +10,7 @@ namespace DMB.Core.Actions
     public class ActionBinding
     {
         [Dmf]
-        public string? ReferenceName { get; set; }
+        public string? TargetTypeName { get; set; }
 
         [Dmf]
         public string? ActionExpression { get; set; }
@@ -27,7 +27,7 @@ namespace DMB.Core.Actions
         {
             return new ActionBinding
             {
-                ReferenceName = this.ReferenceName,
+                TargetTypeName = this.TargetTypeName,
                 ActionExpression = this.ActionExpression,
                 OnSuccessAction = this.OnSuccessAction?.Clone(),
                 OnFailureAction = this.OnFailureAction?.Clone()
@@ -36,10 +36,10 @@ namespace DMB.Core.Actions
 
         public override string? ToString()
         {
-            if (!string.IsNullOrWhiteSpace(this.ReferenceName)
+            if (!string.IsNullOrWhiteSpace(this.TargetTypeName)
                 && !string.IsNullOrWhiteSpace(this.ActionExpression))
             {
-                return $"[{this.ReferenceName}].[{this.ActionExpression}]";
+                return $"[{this.TargetTypeName}].[{this.ActionExpression}]";
             }
             return base.ToString();
         }

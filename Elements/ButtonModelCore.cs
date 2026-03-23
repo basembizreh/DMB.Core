@@ -1,4 +1,5 @@
 ﻿using DMB.Core;
+using DMB.Core.Actions;
 using DMB.Core.Dmf;
 using DMB.Core.Elements;
 using MudBlazor;
@@ -37,5 +38,9 @@ namespace DMB.Core.Elements
 
 		[Dmf]
 		public virtual string EndIconKey { get; set; } = "";
+
+		[Dmf]
+        [ExpandableProperty]
+        public virtual ActionBinding OnClickAction { get; set; } = new();
 	}
 }
