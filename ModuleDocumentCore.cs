@@ -1,4 +1,6 @@
-﻿using DMB.Core.Elements;
+﻿using DMB.Core.Actions;
+using DMB.Core.Dmf;
+using DMB.Core.Elements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +17,8 @@ namespace DMB.Core
 
         public event Action<IModuleItem, string, string>? ItemIdChanged;
         public event Action? StateChanged;
+
+        public List<ActionBinding> StartupActions { get; set; } = new();
 
         public bool IsLoading { get; set; }
 
@@ -142,6 +146,7 @@ namespace DMB.Core
 
             this.AllItems.Clear();
             this.Globals.Clear();
+            this.StartupActions.Clear();
             this.MarkItemsChanged();
         }
 

@@ -16,11 +16,11 @@ namespace DMB.Core.Actions
         public string? ActionExpression { get; set; }
 
         [Dmf]
-        [ExpandableProperty]
+        //[ExpandableProperty]
         public ActionBinding? OnSuccessAction { get; set; }
 
         [Dmf]
-        [ExpandableProperty]
+        //[ExpandableProperty]
         public virtual ActionBinding? OnFailureAction { get; set; }
 
         public ActionBinding Clone()

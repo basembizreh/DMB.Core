@@ -1,4 +1,5 @@
-﻿using DMB.Core.Elements;
+﻿using DMB.Core.Actions;
+using DMB.Core.Elements;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -23,6 +24,22 @@ namespace DMB.Core.Dmf
             module.Add(this.SaveGrid(rootGrid));
             module.Add(this.SaveDatasets(document));
             module.Add(this.SaveVariables(document));
+
+            if (document.StartupActions != null && document.StartupActions.Count > 0)
+            {
+                var startupActionsNode = new XElement("StartupActions");
+
+                foreach (var action in document.StartupActions)
+                {
+                    var itemNode = new XElement("Action");
+                    DmfReflect.WriteAll(itemNode, action);
+                    this.SaveObjectGraph(action, itemNode);
+                    startupActionsNode.Add(itemNode);
+                }
+
+                module.Add(startupActionsNode);
+            }
+
 
             var doc = new XDocument(module);
             doc.Save(filePath);
@@ -52,7 +69,7 @@ namespace DMB.Core.Dmf
                     throw new Exception($"Unsupported DMF version: {version}");
 
                 document.Clear();
-                document.Globals["Language"] = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+                document.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
                 this.LoadDatasets(document, doc.Root?.Element("Datasets"), isPaste);
                 this.LoadVariables(document, doc.Root?.Element("Variables"), isPaste);
@@ -62,6 +79,21 @@ namespace DMB.Core.Dmf
                     return null;
 
                 var rootGrid = LoadGrid(document, gridNode, null, isPaste);
+
+                var startupActionsNode = doc.Root?.Element("StartupActions");
+                document.StartupActions = new List<ActionBinding>();
+
+                if (startupActionsNode != null)
+                {
+                    foreach (var actionNode in startupActionsNode.Elements("Action"))
+                    {
+                        var action = new ActionBinding();
+                        DmfReflect.ReadAll(actionNode, action, isPaste);
+                        this.LoadObjectGraph(document, action, actionNode, isPaste);
+                        document.StartupActions.Add(action);
+                    }
+                }
+
                 document.SetMainGrid(rootGrid);
                 document.RaiseStateChanged();
 
@@ -86,6 +118,21 @@ namespace DMB.Core.Dmf
             module.Add(this.SaveDatasets(document));
             module.Add(this.SaveVariables(document));
 
+            if (document.StartupActions != null && document.StartupActions.Count > 0)
+            {
+                var startupActionsNode = new XElement("StartupActions");
+
+                foreach (var action in document.StartupActions)
+                {
+                    var itemNode = new XElement("Action");
+                    DmfReflect.WriteAll(itemNode, action);
+                    this.SaveObjectGraph(action, itemNode);
+                    startupActionsNode.Add(itemNode);
+                }
+
+                module.Add(startupActionsNode);
+            }
+
             var doc = new XDocument(module);
             return doc.ToString();
         }
@@ -96,13 +143,9 @@ namespace DMB.Core.Dmf
 
             var version = doc.Root?.Attribute("version")?.Value;
             if (version != DmfConstants.CurrentVersion)
-            {
                 throw new Exception($"Unsupported DMF version: {version}");
-            }
 
             document.Clear();
-
-            // Keep language available as a global for expressions
             document.Globals["Language"] = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
 
             this.LoadDatasets(document, doc.Root?.Element("Datasets"), isPaste);
@@ -114,6 +157,20 @@ namespace DMB.Core.Dmf
 
             var rootGrid = LoadGrid(document, gridNode, null, isPaste);
             document.SetMainGrid(rootGrid);
+
+            var startupActionsNode = doc.Root?.Element("StartupActions");
+            document.StartupActions = new List<ActionBinding>();
+
+            if (startupActionsNode != null)
+            {
+                foreach (var actionNode in startupActionsNode.Elements("Action"))
+                {
+                    var action = new ActionBinding();
+                    DmfReflect.ReadAll(actionNode, action, isPaste);
+                    this.LoadObjectGraph(document, action, actionNode, isPaste);
+                    document.StartupActions.Add(action);
+                }
+            }
 
             document.RaiseStateChanged();
             return rootGrid;
@@ -649,7 +706,7 @@ namespace DMB.Core.Dmf
                 if (value == null)
                     continue;
 
-                // 1) DmfChild
+                // 1) DmfChild (Grid only)
                 var childAttr = p.GetCustomAttributes(typeof(DmfChildAttribute), true)
                                  .OfType<DmfChildAttribute>()
                                  .FirstOrDefault();
@@ -696,10 +753,38 @@ namespace DMB.Core.Dmf
                     continue;
                 }
 
-                // 3) ExpandableProperty only
                 var isExpandable = p.GetCustomAttribute<ExpandablePropertyAttribute>() != null;
                 var isDmf = p.GetCustomAttribute<DmfAttribute>() != null;
 
+                // 3) Plain [Dmf] child object
+                if (isDmf && !isExpandable)
+                {
+                    var valueType = value.GetType();
+
+                    var isSimple =
+                        valueType.IsPrimitive ||
+                        valueType.IsEnum ||
+                        valueType == typeof(string) ||
+                        valueType == typeof(decimal) ||
+                        valueType == typeof(DateTime) ||
+                        valueType == typeof(Guid);
+
+                    var isEnumerable = value is System.Collections.IEnumerable && value is not string;
+
+                    if (!isSimple && !isEnumerable)
+                    {
+                        var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                        var childNode = new XElement(childName);
+
+                        DmfReflect.WriteAll(childNode, value);
+                        this.SaveObjectGraph(value, childNode);
+
+                        ownerNode.Add(childNode);
+                        continue;
+                    }
+                }
+
+                // 4) ExpandableProperty + [Dmf]
                 if (isExpandable && isDmf)
                 {
                     var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
@@ -710,10 +795,7 @@ namespace DMB.Core.Dmf
                         ownerNode.Add(childNode);
                     }
 
-                    // attributes of the expandable object
                     DmfReflect.WriteAll(childNode, value);
-
-                    // recurse only through Dmf* inside it
                     this.SaveObjectGraph(value, childNode);
                 }
             }
@@ -770,29 +852,77 @@ namespace DMB.Core.Dmf
 
                     var addMethod = collectionObj.GetType().GetMethod("Add");
                     if (addMethod == null)
-                        throw new InvalidOperationException(
-                            $"Property '{owner.GetType().Name}.{p.Name}' has [DmfChildren] but no Add(T) method was found.");
+                        continue;
 
-                    var itemType = addMethod.GetParameters().First().ParameterType;
+                    var itemType = addMethod.GetParameters().FirstOrDefault()?.ParameterType;
+                    if (itemType == null)
+                        continue;
 
                     foreach (var itemNode in container.Elements(childrenAttr.ItemName))
                     {
-                        var item = Activator.CreateInstance(itemType)
-                                   ?? throw new InvalidOperationException($"Cannot create instance of '{itemType.Name}'.");
+                        object? itemObj;
 
-                        DmfReflect.ReadAll(itemNode, item, isPaste);
-                        this.LoadObjectGraph(document, item, itemNode, isPaste);
+                        if (typeof(GridModelCore).IsAssignableFrom(itemType))
+                        {
+                            itemObj = this.LoadGrid(document, itemNode, parentCell: null, isPaste);
+                        }
+                        else
+                        {
+                            itemObj = Activator.CreateInstance(itemType);
+                            if (itemObj == null)
+                                continue;
 
-                        addMethod.Invoke(collectionObj, new[] { item });
+                            DmfReflect.ReadAll(itemNode, itemObj, isPaste);
+                            this.LoadObjectGraph(document, itemObj, itemNode, isPaste);
+                        }
+
+                        addMethod.Invoke(collectionObj, new[] { itemObj });
                     }
 
                     continue;
                 }
 
-                // 3) ExpandableProperty only
                 var isExpandable = p.GetCustomAttribute<ExpandablePropertyAttribute>() != null;
                 var isDmf = p.GetCustomAttribute<DmfAttribute>() != null;
 
+                // 3) Plain [Dmf] child object
+                if (isDmf && !isExpandable)
+                {
+                    var propType = p.PropertyType;
+
+                    var isSimple =
+                        propType.IsPrimitive ||
+                        propType.IsEnum ||
+                        propType == typeof(string) ||
+                        propType == typeof(decimal) ||
+                        propType == typeof(DateTime) ||
+                        propType == typeof(Guid);
+
+                    var isEnumerable = typeof(System.Collections.IEnumerable).IsAssignableFrom(propType)
+                                       && propType != typeof(string);
+
+                    if (!isSimple && !isEnumerable)
+                    {
+                        var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
+                        var childNode = ownerNode.Element(childName);
+                        if (childNode == null)
+                            continue;
+
+                        var childObj = Activator.CreateInstance(propType);
+                        if (childObj == null)
+                            continue;
+
+                        DmfReflect.ReadAll(childNode, childObj, isPaste);
+                        this.LoadObjectGraph(document, childObj, childNode, isPaste);
+
+                        if (p.SetMethod != null)
+                            p.SetValue(owner, childObj);
+
+                        continue;
+                    }
+                }
+
+                // 4) ExpandableProperty + [Dmf]
                 if (isExpandable && isDmf)
                 {
                     var childName = p.GetCustomAttribute<DmfNameAttribute>()?.Name ?? p.Name;
@@ -800,12 +930,12 @@ namespace DMB.Core.Dmf
                     if (childNode == null)
                         continue;
 
-                    var current = p.GetValue(owner);
-                    if (current == null)
+                    var currentValue = p.GetValue(owner);
+                    if (currentValue == null)
                         continue;
 
-                    DmfReflect.ReadAll(childNode, current, isPaste);
-                    this.LoadObjectGraph(document, current, childNode, isPaste);
+                    DmfReflect.ReadAll(childNode, currentValue, isPaste);
+                    this.LoadObjectGraph(document, currentValue, childNode, isPaste);
                 }
             }
         }

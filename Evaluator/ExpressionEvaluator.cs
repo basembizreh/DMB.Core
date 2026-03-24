@@ -7,10 +7,17 @@ namespace DMB.Core.Evaluator
 {
     public class ExpressionEvaluator
     {
-        private readonly Interpreter _interpreter;
+        private Interpreter? _interpreter;
         private readonly object _sync = new();
+        private readonly ModuleDocumentCore moduleDocument;
 
-        public ExpressionEvaluator(ModuleDocumentCore moduleDocument)
+        public ExpressionEvaluator(ModuleDocumentCore moduleDocumentCore)
+        {
+            this.moduleDocument = moduleDocumentCore;
+            this.RefreshContext();
+        }
+
+        public void RefreshContext()
         {
             _interpreter = new Interpreter();
 
